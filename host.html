@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Openplay Host</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+      /* The body is a flex column with padding for a margin */
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+        box-sizing: border-box;
+        background: #f0f0f0; /* Optional background color */
+      }
+      /* Header style */
+      h1 {
+        margin: 0 0 10px 0;
+      }
+      /* Container for the iframe to center it */
+      .iframe-container {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      /* The iframe keeps a 16:12 (or 4:3) ratio and scales up to fill the viewport */
+      iframe {
+        aspect-ratio: 16 / 12;
+        /* 
+          - 100vw - 20px: available width (full viewport width minus horizontal margins)
+          - (100vh - 80px) * (16/12): available width from viewport height after subtracting
+            header height (assumed ~60px plus 20px for top/bottom margins) multiplied by the ratio.
+        */
+        width: min( calc(100vw - 20px), calc((100vh - 80px) * (16 / 12)) );
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Host</h1>
+    <div class="iframe-container">
+      <iframe id="gameIframe" src="/game.html"></iframe>
+    </div>
+    <script type="module" src="/src/host.ts"></script>
+  </body>
+</html>

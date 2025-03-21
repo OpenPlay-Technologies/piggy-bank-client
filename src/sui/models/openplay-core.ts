@@ -128,7 +128,7 @@ export interface AccountModel {
 
 export interface BalanceManagerModel {
     id: Uid;
-    balance: number;
+    balance: bigint;
     tx_allow_listed: MoveObject<VecSet<string>>;
     cap_id: string;
 }

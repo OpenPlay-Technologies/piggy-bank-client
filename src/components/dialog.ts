@@ -52,14 +52,31 @@ export class Dialog extends Phaser.GameObjects.Container {
       this.hide();
     });
 
+    background.setScrollFactor(0);
+    this.titleText.setScrollFactor(0);
+    this.contentText.setScrollFactor(0);
+    this.button.setScrollFactor(0);
+
+    this.setDepth(20);
+
+
     // Add this container to the scene
     scene.add.existing(this);
   }
 
   // Method to show the dialog with custom text
-  public show(title: string, text: string): void {
+  public show(title: string, text: string, buttonText?: string, callBack?: () => void): void {
     this.titleText.setText(title);
     this.contentText.setText(text);
+    if (buttonText) {
+      this.button.setText(buttonText);
+    }
+    this.button.on('pointerup', () => {
+      this.hide();
+      if (callBack) {
+        callBack();
+      }
+    });
     this.setVisible(true);
   }
 

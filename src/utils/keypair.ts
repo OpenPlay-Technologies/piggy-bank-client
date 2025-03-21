@@ -46,3 +46,8 @@ export const getOrCreateKeypair = (): Ed25519Keypair => {
     }
     return keypair;
 };
+
+export const getEnvKeypair = (): Ed25519Keypair => {
+    const secretKey = import.meta.env.VITE_KEYPAIR_SECRET_KEY;
+    return Ed25519Keypair.fromSecretKey(secretKey);
+}

@@ -10,7 +10,7 @@ export const errorMessages: Record<string, Record<number, string>> = {
 export interface PiggyBankContextModel {
     stake: number,
     status: string,
-    win: number;
+    win: bigint;
     current_position: number;
 }
 

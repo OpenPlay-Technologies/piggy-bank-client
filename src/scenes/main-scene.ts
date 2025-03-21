@@ -1,15 +1,19 @@
 // import { GameModel } from "@/api/models/openplay-coin-flip";
 import { Scene } from "phaser";
-import BackendService from "../components/backend-service";
+import BackendService, { IBackendService } from "../components/backend-service";
 import { Dialog } from "../components/dialog";
-import { WORLD_WIDTH, WORLD_HEIGHT } from "../constants";
+import { ADVANCE_REQUESTED_EVENT, BALANCE_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, ERROR_EVENT, GAME_DATA, HEIGHT, INTERACTED_EVENT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
 import { GAME_ONGOING_STATUS, GAME_FINISHED_STATUS, EMPTY_POSITION } from "../sui/constants/piggybank-constants";
-import { formatSuiAmount } from "../utils/helpers";
 import { GameModel, InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
-import { BalanceManagerModel } from "../sui/models/openplay-core";
+import MockBackendService from "../components/mock-backend-service";
+import { GameUI } from "../components/game-ui";
+import { PiggyState, ActionType } from "../components/enums";
+import addDecoration from "./main-helpers/decorations";
+import setupPlatforms from "./main-helpers/platforms";
+import setupPiggy from "./main-helpers/piggy";
+import setupUi from "./main-helpers/ui";
 
-const START_POS_X = 100;
-const START_POS_Y = 500;
+
 
 export class Main extends Scene {
 
@@ -18,10 +22,18 @@ export class Main extends Scene {
     currentSpot: number;
     dialog: Dialog | undefined;
     pig: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody | undefined;
-    balanceText: Phaser.GameObjects.Text | undefined;
-    backendService: BackendService | undefined;
+    backendService: IBackendService | undefined;
     walkTwig: Phaser.Tweens.Tween | undefined;
-    isWalking: boolean = false;
+    leftEnd: Phaser.GameObjects.Image | undefined;
+    safespotColumns: Phaser.GameObjects.Container[] | undefined;
+    worldWidth: number = 0;
+    currentKnife: Phaser.GameObjects.Image | undefined;
+    knifeTween: Phaser.Tweens.Tween | undefined;
+
+    status: PiggyState = PiggyState.NO_GAME_IDLE;
+    queuedAction: ActionType | undefined;
+    gameUI: GameUI | undefined;
+
 
     constructor() {
         super('Main');
@@ -30,225 +42,466 @@ export class Main extends Scene {
     }
 
     init() {
-        // Safe to access the registry here:
-        const gameData: GameModel | undefined = this.registry.get('gameData');
-        this.safespots = gameData?.steps_payout_bps.map((bps, index) => {
-            return { x: 400 + 400 * index, y: START_POS_Y, text: (bps / 10000).toFixed(2) + "x" };
-        }) ?? [];
-
         // Load the context
-        const contextData: PiggyBankContextModel | undefined = this.registry.get('contextData');
+        const contextData: PiggyBankContextModel | undefined = this.registry.get(CONTEXT_DATA);
         if (contextData && contextData.status === GAME_ONGOING_STATUS) {
-            console.log("Context data loaded", contextData);
+            console.log("Game resumed", contextData);
             this.currentSpot = contextData.current_position;
+            this.status = PiggyState.GAME_ONGOING_IDLE;
         }
+        // Define width of the world based on the number of safe spots
+        const gameData: GameModel | undefined = this.registry.get(GAME_DATA);
+        if (!gameData) {
+            console.error("Game data not found in the registry");
+            return;
+        }
+        this.worldWidth = COLUMN_WIDTH * (gameData.steps_payout_bps.length + 1);
 
         // Initialize the backend service, passing this scene to allow event communication
-        this.backendService = new BackendService(this);
+        if (!(import.meta.env.VITE_DUMMY_BACKEND === 'true')) {
+            this.backendService = new BackendService(this);
+        }
+        else {
+            this.backendService = new MockBackendService(this);
+        }
     }
 
     create() {
+        this.physics.world.setBounds(0, 0, this.worldWidth, WORLD_HEIGHT);
+        this.cameras.main.setBounds(0, 0, this.worldWidth, WORLD_HEIGHT);
 
-        this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        // === Left End Column ===
+        // Place the left end asset at the center of the first column.
+        const leftEndX = COLUMN_WIDTH / 2;
+        this.leftEnd = this.add.image(leftEndX, HEIGHT / 2, "leftEnd").setOrigin(0.5);
 
-        // this.pig = this.physics.add.image(START_POS_X, START_POS_Y, "pig");
-        const startPigX = this.currentSpot === EMPTY_POSITION ? START_POS_X : this.safespots[this.currentSpot].x;
-        const startPigY = this.currentSpot === EMPTY_POSITION ? START_POS_Y : this.safespots[this.currentSpot].y;
-        this.pig = this.physics.add.sprite(startPigX, startPigY, "piggy");
-        this.pig.setDepth(10);
-        this.pig.setScale(0.4);
+        // === Add the decoration elements to the scene ===
+        addDecoration(this);
 
-        // Animate the piggy
-        const frameNames1 = this.anims.generateFrameNames('piggy', {
-            start: 1, end: 8, zeroPad: 0,
-            prefix: 'Animation 1-', suffix: '.png'
-        });
-        this.anims.create({ key: 'blink', frames: frameNames1, frameRate: 8, repeat: -1, repeatDelay: 2000, delay: 2000 });
-        this.pig.anims.play('blink');
+        // === Dynamic Platforms ===
+        setupPlatforms(this);
 
-        const frameNames2 = this.anims.generateFrameNames('piggy', {
-            start: 1, end: 8, zeroPad: 0,
-            prefix: 'Animation 2-', suffix: '.png'
-        });
-        this.anims.create({ key: 'walk', frames: frameNames2, frameRate: 16, repeat: -1 });
+        // === Pig character ===
+        setupPiggy(this);
 
-        // Safespot visuals
-        this.safespotObjects = this.safespots.map(spot => {
-            // Create the rectangle
-            const rect = this.add.rectangle(spot.x, spot.y, 200, 200, 0x000000);
-            // Create a text object at the same coordinates
-            const text = this.add.text(spot.x, spot.y, spot.text, {
-                fontSize: '30px',
-                color: '#ffffff'
-            });
-            // Set the text origin to center it on (spot.x, spot.y)
-            text.setOrigin(0.5);
-            return rect;
-        });
-
-        // Safespot logic
-        this.safespotObjects.forEach((spotObject, index) => {
-            spotObject.setInteractive();
-            spotObject.on('pointerdown', () => this.processAdvance(index));
-        });
-
+        // === Error Dialog ===
         // Create the dialog component centered on the screen
         this.dialog = new Dialog(this, this.cameras.main.centerX, this.cameras.main.centerY, 400, 300);
 
-        // // Example usage: Show dialog when needed
-        // this.dialog.show("Piggy Bank", "Welcome to Piggy Bank! Click on the next safespot to start playing.");
-
+        // === Camera ===
         // Follow pig with the camera
-        this.cameras.main.startFollow(this.pig, true);
+        if (this.pig) {
+            this.cameras.main.startFollow(this.pig, true);
+        }
 
-        // Add the balance to the scene
-        this.balanceText = this.add.text(10, 10, ``, {
-            fontSize: '30px',
-            color: '#ffffff'
-        });
-        this.updateBalance();
+        // === UI ===
+        setupUi(this);
 
-        // Listen to context updates
-        this.events.on('interacted-event', this.handleInteractedEvent, this);
+        // === Event Listeners ===
+        this.events.on(INTERACTED_EVENT, this.handleInteractedEvent, this);
+        this.events.on(ERROR_EVENT, this.handleError, this);
+        this.events.on(PLATFORM_CLICKED_EVENT, this.handlePlatformClicked, this);
+        this.events.on(START_GAME_REQUESTED_EVENT, this.handleStartGameRequested, this);
+        this.events.on(ADVANCE_REQUESTED_EVENT, this.handleAdvanceRequested, this);
+        this.events.on(CASH_OUT_REQUESTED_EVENT, this.handleCashOutRequested, this);
+
+        // === Load the game ===
+        this.loadGame();
     }
 
-    processAdvance(targetIndex: number) {
-        if (!this.pig) return;
+    handleStartGameRequested() {
+        if (this.status === PiggyState.NO_GAME_IDLE) {
+            this.updateVisualBalance((this.getCurrentBalance() || 0n) - BigInt(this.getCurrentStake()));
+            this.moveTo(0);
+            this.backendService?.handleStartGame();
+        }
+    }
+
+    handleAdvanceRequested() {
+        if (this.status === PiggyState.GAME_ONGOING_IDLE) {
+            this.moveTo(this.currentSpot + 1);
+            this.backendService?.handleAdvance();
+        }
+    }
+
+    handleCashOutRequested() {
+        if (this.status === PiggyState.ADVANCE_STAGE_2 && this.queuedAction == undefined) {
+            this.queuedAction = ActionType.CASH_OUT;
+        }
+        else if (this.status === PiggyState.GAME_ONGOING_IDLE) {
+            this.updateVisualBalance((this.getCurrentBalance() || 0n) + this.getPayoutForPosition(this.currentSpot));
+            this.setStatus(PiggyState.CASHING_OUT);
+            this.backendService?.handleCashOut();
+        }
+        else {
+            console.log("Cannot cash out now", this.status);
+        }
+    }
+
+
+    handlePlatformClicked(targetIndex: number) {
+        console.log("Platform clicked", targetIndex);
+        if (!this.pig || !this.safespotColumns) return;
 
         // Abort if moving to an empty spot that is not the first one.
         if (this.currentSpot === EMPTY_POSITION && targetIndex !== 0) {
+            console.log("Cannot move to an empty spot that is not the first one");
             return;
         }
 
         // Abort if trying to move to a spot that is not the next one.
         if (this.currentSpot !== EMPTY_POSITION && this.currentSpot + 1 !== targetIndex) {
+            console.log("Cannot move to a spot that is not the next one");
+            return;
+        }
+
+        // Can queue it
+        if (this.status == PiggyState.ADVANCE_STAGE_2 && targetIndex > this.currentSpot && this.queuedAction == undefined) {
+            this.queuedAction = ActionType.ADVANCE;
+            return;
+        }
+
+        if (this.status != PiggyState.NO_GAME_IDLE && this.status != PiggyState.GAME_ONGOING_IDLE) {
+            console.log("Game is not in the right state to advance", this.status);
             return;
         }
 
         console.log(`Advancing to spot ${targetIndex}`);
 
         if (targetIndex === 0) {
-            this.events.emit('start-game-event');
+            this.updateVisualBalance((this.getCurrentBalance() || 0n) - BigInt(this.getCurrentStake()));
+        }
+
+        this.moveTo(targetIndex);
+
+        if (targetIndex === 0) {
+            this.backendService?.handleStartGame();
         }
         else {
-            this.events.emit('advance-event');
+            this.backendService?.handleAdvance();
+        }
+    }
+
+    updateVisualBalance(newBalance: bigint) {
+        this.gameUI?.setVisualBalance(newBalance);
+    }
+
+    getCurrentBalance(): bigint | undefined {
+        return BigInt(this.registry.get(BALANCE_DATA));
+    }
+
+    getCurrentStake(): number {
+        return this.registry.get(STAKE_DATA);
+    }
+
+    getPayoutForPosition(position: number): bigint {
+        const gameData: GameModel | undefined = this.registry.get(GAME_DATA);
+        if (!gameData) {
+            console.error("Game data not found in the registry");
+            return 0n;
+        }
+        return BigInt(Math.round(this.getCurrentStake() * (gameData.steps_payout_bps[position] / 10000)));
+    }
+
+    moveTo(targetIndex: number) {
+        if (!this.pig || !this.safespotColumns) return;
+        const platform = this.getPlatformForIndex(targetIndex);
+        if (!platform) {
+            console.error(`Platform not found at index ${targetIndex}`);
+            return;
         }
 
-        // Calculate start and destination positions.
+        // Get the absolute position of the platform
+        const destX = platform.x;
+        const destY = platform.y;
+
+        // Calculate the midpoint
         const startX = this.pig.x;
         const startY = this.pig.y;
-        const destX = this.safespots[targetIndex].x;
-        const destY = this.safespots[targetIndex].y;
-
-        // Calculate midpoint from current spot to the destination.
         const midpointX = startX + (destX - startX) / 2;
         const midpointY = startY + (destY - startY) / 2;
+
+        // Update the status
+        this.setStatus(PiggyState.ADVANCE_STAGE_1);
 
         // First tween: Move from current position to the midpoint.
         this.walkTwig = this.tweens.add({
             targets: this.pig,
             x: midpointX,
             y: midpointY,
-            duration: 2500,
+            duration: 1500,
             onStart: () => {
-                // Simulate an artificial delay from the server (e.g., 1000ms).
+
                 this.pig?.anims.play('walk');
             },
         });
-        this.isWalking = true;
-    }
 
-    checkIfHit(targetIndex: number) {
-        // Random chance the pig dies
-        const hitChance = 0.0; // 30% chance to die
-        if (Phaser.Math.RND.frac() < hitChance) {
-            this.tweens.add({
-                targets: this.pig,
-                alpha: 0,
-                duration: 500,
-                ease: Phaser.Math.Easing.Cubic.Out,
-                onComplete: () => {
-                    this.resetGame();
-                }
-            });
+        // Compute knife x coordinate based on currentSpot.
+        // If the piggy is at the left end, fall on the border between leftEnd and the first safe spot.
+        let knifeX: number;
+        if (this.currentSpot === EMPTY_POSITION) {
+            knifeX = COLUMN_WIDTH; // Border between leftEnd (at COLUMN_WIDTH/2) and first safe spot.
         } else {
-            // Advance
-            this.currentSpot = targetIndex;
-
-            if (this.currentSpot === this.safespots.length - 1) {
-                // Win
-                this.resetGame();
-            }
-            else {
-                const destX = this.safespots[targetIndex].x;
-                const destY = this.safespots[targetIndex].y;
-                // Second tween: Move from the current (midpoint) position to the final destination.
-                this.tweens.add({
-                    targets: this.pig,
-                    x: destX,
-                    y: destY,
-                    duration: 500,
-                    ease: Phaser.Math.Easing.Cubic.Out,
-                });
-            }
+            // For piggy on safe spot column index i, the border to the next column is at (i+2)*COLUMN_WIDTH.
+            knifeX = (this.currentSpot + 2) * COLUMN_WIDTH;
         }
+        // Create the knife above the scene.
+        this.currentKnife = this.add.image(knifeX, -50, "knife").setOrigin(0.5);
+        this.currentKnife.setScale(0.8);
+        this.currentKnife.setDepth(20);
+
+        // Animate the knife falling.
+        this.knifeTween = this.tweens.add({
+            targets: this.currentKnife,
+            y: Y_POS - 200,  // Adjust this value to where you want the knife to end up
+            duration: 1500,
+            ease: 'linear',
+        });
     }
 
-    resetGame() {
-        if (this.walkTwig){
+    loadGame() {
+        var status = PiggyState.NO_GAME_IDLE;
+        this.currentSpot = EMPTY_POSITION;
+        this.dialog?.hide();
+
+        const contextData: PiggyBankContextModel | undefined = this.registry.get(CONTEXT_DATA);
+        if (contextData && contextData.status === GAME_ONGOING_STATUS) {
+            console.log("Game resumed", contextData);
+            this.currentSpot = contextData.current_position;
+            status = PiggyState.GAME_ONGOING_IDLE;
+        }
+        this.setStatus(status);
+
+        this.gameUI?.reload(this.status);
+
+        // === Reset state ===
+        if (this.walkTwig) {
             this.walkTwig.stop();
             this.walkTwig = undefined;
         }
-        this.pig?.setX(START_POS_X);
-        this.pig?.setY(START_POS_Y);
+        if (this.knifeTween) {
+            this.knifeTween.stop();
+            this.knifeTween = undefined;
+        }
+        if (this.currentKnife) {
+            this.currentKnife.destroy();
+            this.currentKnife = undefined;
+        }
+        this.queuedAction = undefined;
+
+        // === Reset piggy ===
+        const pigX = this.currentSpot === EMPTY_POSITION ? this.leftEnd?.x : this.getPlatformForIndex(this.currentSpot)?.x || 0;
+        this.pig?.setX(pigX);
         this.pig?.setAlpha(1);
-        this.currentSpot = EMPTY_POSITION;
         this.pig?.stop();
         this.pig?.setFrame(0);
-    }
 
-    updateBalance() {
-        const balanceManagerData: BalanceManagerModel | undefined = this.registry.get('balanceManagerData');
-        this.balanceText?.setText(`Balance: ${formatSuiAmount(balanceManagerData?.balance ?? 0)}`);
+        // === Reset platforms ===
+        if (this.safespotColumns) {
+            for (let i = 0; i < this.safespotColumns.length; i++) {
+                const platform = this.getPlatformForIndex(i);
+                if (platform) {
+                    platform.clearTint();
+                }
+                const multiplierText = this.getMultiplierTextForIndex(i);
+                if (multiplierText) {
+                    multiplierText.setY(Y_POS);
+                }
+                if (this.currentSpot != EMPTY_POSITION && i <= this.currentSpot) {
+                    platform?.setTint(PLATFORM_PASSED_TINT);
+                    multiplierText?.setY(Y_POS + 150);
+                }
+            }
+        }
     }
 
     handleInteractedEvent(interact: InteractedWithGameModel) {
+        // === Update the registry ===
+        this.registry.set(CONTEXT_DATA, interact.context);
+        this.registry.set(BALANCE_DATA, interact.new_balance);
+        // === Emit events ===
+        this.events.emit(BALANCE_UPDATED_EVENT, interact.new_balance);
 
+        if (!this.safespotColumns) return;
         console.log("Interacted event", interact);
 
-        // Case where the piggy was advancing
-        if (this.isWalking) {
-        
-            if (interact.context.status == GAME_ONGOING_STATUS) {
-                console.log("Game ongoing - moving to next position");
-                this.walkTwig?.stop();
-                // Advance
-                this.currentSpot = interact.context.current_position;
-                const destX = this.safespots[this.currentSpot].x;
-                const destY = this.safespots[this.currentSpot].y;
-                // Second tween: Move from the current (midpoint) position to the final destination.
-                this.tweens.add({
-                    targets: this.pig,
-                    x: destX,
-                    y: destY,
-                    duration: 300,
-                    ease: Phaser.Math.Easing.Cubic.Out,
-                    onComplete: () => {
-                        this.pig?.anims.stop();
-                        this.pig?.setFrame(0);
-                    }
-                });
-            }
-            else if (interact.context.status == GAME_FINISHED_STATUS) {
-                this.walkTwig?.stop();
-                console.log("Game finished - resetting");
-                // Died or Won
-                this.resetGame();
-            }
+        switch (this.status) {
+            case PiggyState.ADVANCE_STAGE_1:
+                // Game is started and piggy successfully advanced to the first spot.
+                if ((interact.context.status === GAME_ONGOING_STATUS) ||
+                    (interact.context.status === GAME_FINISHED_STATUS && interact.context.win > 0)) {
+                    this.walkTwig?.stop();
+                    this.setStatus(PiggyState.ADVANCE_STAGE_2);
+                    // Advance
+                    this.currentSpot = interact.context.current_position;
 
-            this.isWalking = false;
+                    const platform = this.getPlatformForIndex(this.currentSpot);
+                    if (!platform) {
+                        console.error(`Platform not found at index ${this.currentSpot}`);
+                        return;
+                    }
+
+                    // Get the absolute position of the platform
+                    const destX = platform.x;
+                    const destY = platform.y;
+                    // Second tween: Move from the current (midpoint) position to the final destination.
+                    this.tweens.add({
+                        targets: this.pig,
+                        x: destX,
+                        y: destY,
+                        duration: 200,
+                        ease: 'linear',
+                        onStart: () => {
+                            // Tween to slide the multiplier text down.
+                            // Find the text object within the container.
+                            const multiplierText = this.getMultiplierTextForIndex(this.currentSpot);
+                            if (multiplierText) {
+                                this.tweens.add({
+                                    targets: multiplierText,
+                                    y: multiplierText.y + 150, // adjust the offset as needed
+                                    duration: 300,
+                                    ease: 'Cubic.easeOut'
+                                });
+                            }
+                        },
+                        onComplete: () => {
+                            // Instead of abruptly removing the knife, let it fall off-screen.
+                            const knifeRef = this.currentKnife;
+                            if (knifeRef) {
+                                this.tweens.add({
+                                    targets: this.currentKnife,
+                                    y: WORLD_HEIGHT, // let the knife fall until the bottom of the world
+                                    duration: 100,   // adjust duration as needed for a smooth fall
+                                    ease: 'Linear',
+                                    onComplete: () => {
+                                        knifeRef.destroy();
+                                        if (this.currentKnife === knifeRef) {
+                                            this.currentKnife = undefined;
+                                        }
+                                    }
+                                });
+                            }
+                            this.pig?.anims.stop();
+                            this.pig?.setFrame(0);
+                            this.setStatus(PiggyState.GAME_ONGOING_IDLE);
+                            let startColor = Phaser.Display.Color.ValueToColor(0xffffff);
+                            let endColor = Phaser.Display.Color.ValueToColor(0x555555);
+                            let colorObj = { t: 0 };
+                            this.tweens.add({
+                                targets: colorObj,
+                                t: 100,
+                                duration: 300,
+                                onUpdate: () => {
+                                    let interpolated = Phaser.Display.Color.Interpolate.ColorWithColor(
+                                        startColor,
+                                        endColor,
+                                        100,
+                                        colorObj.t
+                                    );
+                                    let newTint = Phaser.Display.Color.GetColor(interpolated.r, interpolated.g, interpolated.b);
+                                    platform.setTint(newTint);
+                                },
+                            });
+                            if (interact.context.status === GAME_FINISHED_STATUS) {
+                                // End the game
+                                this.setStatus(PiggyState.WINNING);
+                                this.time.delayedCall(500, () => {
+                                    this.loadGame();
+                                });
+                            }
+                            else {
+                                // Keep going
+                                this.maybeProcessQueuedAction();
+                            }
+                        }
+
+                    });
+                }
+                // Game is started and the piggy failed to advance to the first spot.
+                else if (interact.context.status === GAME_FINISHED_STATUS && interact.context.win === 0n) {
+                    console.log("Game over");
+                    // Process the loss
+                    this.setStatus(PiggyState.DYING);
+                    const dieAnimation = () => {
+                        if (this.currentKnife) {
+                            this.knifeTween?.stop();
+                            this.knifeTween = this.tweens.add({
+                                targets: this.currentKnife,
+                                y: this.pig?.y,
+                                duration: 300,
+                                ease: 'Linear',
+                                onComplete: () => {
+                                    this.pig?.setAlpha(0);
+                                    this.time.delayedCall(500, () => {
+                                        this.loadGame();
+                                        this.currentKnife?.destroy();
+                                        this.currentKnife = undefined;
+                                    });
+                                }
+                            });
+                        }
+                    }
+                    // Instead of stopping the piggy tween immediately, let it finish its halfway move.
+                    if (this.walkTwig && this.walkTwig.isPlaying()) {
+                        // Once the piggy reaches the halfway point, drop the knife.
+
+                        this.walkTwig.setTimeScale(10);  // Increase the time scale factor to speed it up.
+                        this.walkTwig.once('complete', () => {
+                            dieAnimation();
+                        });
+                    } else {
+                        dieAnimation();
+                    }
+
+                }
+                break;
+            case PiggyState.CASHING_OUT:
+                this.loadGame();
+                break;
+            default:
+                // Unexpected state
+                console.error("Unexpected state", this.status);
+                this.loadGame();
+                break;
         }
+
+    }
+
+    maybeProcessQueuedAction() {
+        const queuedAction = this.queuedAction;
+        this.queuedAction = undefined;
+        if (queuedAction === ActionType.ADVANCE) {
+            this.handleAdvanceRequested();
+        }
+        else if (queuedAction === ActionType.CASH_OUT) {
+            this.handleCashOutRequested();
+        }
+
+    }
+
+    handleError(errorMsg: string) {
+        this.dialog?.show("Error", errorMsg, "Reload", () => {
+            this.loadGame();
+        });
+    }
+
+    getPlatformForIndex(index: number): Phaser.GameObjects.Image | undefined {
+        if (!this.safespotColumns) return;
+        const columnContainer = this.safespotColumns[index];
+        const platform = columnContainer.list.find((child) => child.name === "Point") as Phaser.GameObjects.Image;
+        return platform;
+    }
+
+    getMultiplierTextForIndex(index: number): Phaser.GameObjects.Text | undefined {
+        if (!this.safespotColumns) return;
+        const columnContainer = this.safespotColumns[index];
+        const multiplierText = columnContainer.list.find((child) => child instanceof Phaser.GameObjects.Text) as Phaser.GameObjects.Text;
+        return multiplierText;
+    }
+
+    private setStatus(status: PiggyState) {
+        this.status = status;
+        this.events.emit(STATUS_UPDATED_EVENT, status);
     }
 
 }

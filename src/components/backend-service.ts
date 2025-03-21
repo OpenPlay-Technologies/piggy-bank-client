@@ -1,158 +1,190 @@
-import { getOrCreateKeypair } from "../utils/keypair";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-// import { Transaction } from "@mysten/sui/transactions";
+import { Transaction } from "@mysten/sui/transactions";
+import { ADVANCE_ACTION, CASH_OUT_ACTION, INTERACT_EVENT_TYPE, INTERACT_FUNCTION_TARGET, START_GAME_ACTION } from "../sui/constants/piggybank-constants";
 
+import { signAndExecuteTransaction } from "../openplay-connect/functions";
+import { InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
+import { BALANCE_DATA, CONTEXT_DATA, STAKE_DATA } from "../constants";
 
-export default class BackendService {
+export interface IBackendService {
+    handleAdvance(): Promise<void>;
+    handleStartGame(): Promise<void>;
+    handleCashOut(): Promise<void>;
+}
+
+export default class BackendService implements IBackendService {
     // Removed unused 'scene' property
-    keypair: Ed25519Keypair;
+    scene: Phaser.Scene;
 
-    constructor(_scene: Phaser.Scene) {
-        // Removed assignment to unused 'scene' property
-        // Listen to the "buttonClicked" event emitted by the Phaser scene
-        // this.scene.events.on('advance-event', this.handleAdvance, this);
-        // this.scene.events.on('start-game-event', this.handleStartGame, this);
-        this.keypair = getOrCreateKeypair();
+    constructor(scene: Phaser.Scene) {
+        this.scene = scene;
+        // this.scene.events.on(ADVANCE_REQUESTED_EVENT, this.handleAdvance, this);
+        // this.scene.events.on(START_GAME_REQUESTED_EVENT, this.handleStartGame, this);
     }
 
-    // // Called when the button is clicked in the Phaser scene
-    // private async handleAdvance(): Promise<void> {
-    //     console.time('handleAdvanceTotal');
-    //     try {
-    //         console.log("Advancing");
-    //         const balanceManagerData: BalanceManagerModel = this.scene.registry.get('balanceManagerData');
-    //         const houseId = process.env.NEXT_PUBLIC_HOUSE_ID;
-    //         const playCapId = process.env.NEXT_PUBLIC_PLAY_CAP_ID;
-    //         const gameId = process.env.NEXT_PUBLIC_GAME_ID;
+    public async handleCashOut(): Promise<void> {
+        try {
+            const gameId = import.meta.env.VITE_GAME_ID;
+            const registryId = import.meta.env.VITE_REGISTRY_ID;
+            const balanceManagerId = import.meta.env.VITE_BALANCE_MANAGER_ID;
+            const houseId = import.meta.env.VITE_HOUSE_ID;
+            const playCapId = import.meta.env.VITE_PLAY_CAP_ID;
 
-    //         if (!houseId || !playCapId || !gameId) {
-    //             throw new Error("Missing environment variables");
-    //         }
+            // console.log(gameId);
+            // console.log(tx.object(gameId));
+            // tx.object(Inputs.ObjectRef({ digest, objectId, version }));
 
-    //         console.time('buildSponsoredInteract');
-    //         const sponsorSignature = await buildSponsoredInteract(
-    //             this.keypair.toSuiAddress(),
-    //             balanceManagerData.id.id,
-    //             houseId,
-    //             playCapId,
-    //             gameId,
-    //             ADVANCE_ACTION,
-    //             1e7
-    //         );
-    //         console.timeEnd('buildSponsoredInteract');
-    //         console.log(sponsorSignature);
+            const tx = new Transaction();
 
-    //         console.time('txSign');
-    //         const tx = Transaction.from(sponsorSignature.bytes);
-    //         const senderSignature = await tx.sign({
-    //             signer: this.keypair,
-    //         });
-    //         console.timeEnd('txSign');
+            tx.moveCall({
+                target: INTERACT_FUNCTION_TARGET,
+                arguments: [
+                    tx.object(gameId),
+                    tx.object(registryId),
+                    tx.object(balanceManagerId),
+                    tx.object(houseId),
+                    tx.object(playCapId),
+                    tx.pure.string(CASH_OUT_ACTION),
+                    tx.pure.u64(0),
+                    tx.object('0x8'), // random
+                ],
+            });
 
-    //         console.time('executeSponsoredTransact');
-    //         const result = await executeSponsoredTransact(
-    //             sponsorSignature.bytes,
-    //             senderSignature.signature,
-    //             sponsorSignature.signature
-    //         );
-    //         console.timeEnd('executeSponsoredTransact');
+            const result = await signAndExecuteTransaction(tx);
 
-    //         const interactEvent = result.events?.find(x => x.type == INTERACT_EVENT_TYPE);
-    //         let eventFound = false;
+            const interactEvent = result.events?.find(x => x.type == INTERACT_EVENT_TYPE);
 
-    //         if (interactEvent) {
-    //             eventFound = true;
-    //             const parsedEvent = interactEvent.parsedJson as InteractedWithGameModel;
-    //             this.scene.events.emit('interacted-event', parsedEvent);
-    //         }
+            if (interactEvent) {
+                const parsedEvent = parseInteractedWithGameModel(interactEvent.parsedJson) as InteractedWithGameModel;
+                this.scene.events.emit('interacted-event', parsedEvent);
+            }
+            else {
+                this.scene.events.emit('error-event', 'No interact event found');
+            }
+        }
+        catch (error) {
+            console.error(error);
+            this.scene.events.emit('error-event', error instanceof Error ? error.message : "An unknown error occurred");
+        }
+    }
 
-    //         // Measure the waitForTransaction timing when the promise resolves.
-    //         console.time('waitForTransaction');
-    //         waitForTransaction(result.digest).then(result => {
-    //             const interactEvent = result.events?.find(x => x.type == INTERACT_EVENT_TYPE);
-    //             if (interactEvent && !eventFound) {
-    //                 const parsedEvent = interactEvent.parsedJson as InteractedWithGameModel;
-    //                 this.scene.events.emit('interacted-event', parsedEvent);
-    //             }
-    //             console.timeEnd('waitForTransaction');
-    //         })
-    //             .catch((error) => {
-    //                 throw error;
-    //             });
-    //     } catch (error) {
-    //         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //         // @ts-ignore
-    //         console.error(error.message);
-    //         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //         // @ts-ignore
-    //         // handleError(error.message);
-    //     } finally {
-    //         console.timeEnd('handleAdvanceTotal');
-    //     }
-    // }
+    // Called when the button is clicked in the Phaser scene
+    public async handleAdvance(): Promise<void> {
+        try {
+            const gameId = import.meta.env.VITE_GAME_ID;
+            const registryId = import.meta.env.VITE_REGISTRY_ID;
+            const balanceManagerId = import.meta.env.VITE_BALANCE_MANAGER_ID;
+            const houseId = import.meta.env.VITE_HOUSE_ID;
+            const playCapId = import.meta.env.VITE_PLAY_CAP_ID;
 
-    // // Called when the button is clicked in the Phaser scene
-    // private async handleStartGame(): Promise<void> {
-    //     try {
-    //         console.log("Starting game");
-    //         const balanceManagerData: BalanceManagerModel = this.scene.registry.get('balanceManagerData');
-    //         const houseId = process.env.NEXT_PUBLIC_HOUSE_ID;
-    //         const playCapId = process.env.NEXT_PUBLIC_PLAY_CAP_ID;
-    //         const gameId = process.env.NEXT_PUBLIC_GAME_ID;
+            // console.log(gameId);
+            // console.log(tx.object(gameId));
+            // tx.object(Inputs.ObjectRef({ digest, objectId, version }));
 
-    //         if (!houseId || !playCapId || !gameId) {
-    //             throw new Error("Missing environment variables");
-    //         }
+            const tx = new Transaction();
 
-    //         const sponsorSignature = await buildSponsoredInteract(
-    //             this.keypair.toSuiAddress(),
-    //             balanceManagerData.id.id,
-    //             houseId,
-    //             playCapId,
-    //             gameId,
-    //             "StartGame",
-    //             1e7
-    //         )
-    //         console.log(sponsorSignature);
+            tx.moveCall({
+                target: INTERACT_FUNCTION_TARGET,
+                arguments: [
+                    tx.object(gameId),
+                    tx.object(registryId),
+                    tx.object(balanceManagerId),
+                    tx.object(houseId),
+                    tx.object(playCapId),
+                    tx.pure.string(ADVANCE_ACTION),
+                    tx.pure.u64(0),
+                    tx.object('0x8'), // random
+                ],
+            });
+
+            const result = await signAndExecuteTransaction(tx);
+
+            const interactEvent = result.events?.find(x => x.type == INTERACT_EVENT_TYPE);
+            let eventFound = false;
+
+            if (interactEvent) {
+                eventFound = true;
+                const parsedEvent = parseInteractedWithGameModel(interactEvent.parsedJson) as InteractedWithGameModel;
+                this.scene.events.emit('interacted-event', parsedEvent);
+            }
+            else {
+                this.scene.events.emit('error-event', 'No interact event found');
+            }
+        }
+        catch (error) {
+            console.error(error);
+            this.scene.events.emit('error-event', error instanceof Error ? error.message : "An unknown error occurred");
+        }
+    }
 
 
-    //         const tx = Transaction.from(sponsorSignature.bytes);
-    //         const senderSignature = await tx.sign({
-    //             signer: this.keypair,
-    //         });
+    // Called when the button is clicked in the Phaser scene
+    public async handleStartGame(): Promise<void> {
+        try {
+            const gameId = import.meta.env.VITE_GAME_ID;
+            const registryId = import.meta.env.VITE_REGISTRY_ID;
+            const balanceManagerId = import.meta.env.VITE_BALANCE_MANAGER_ID;
+            const houseId = import.meta.env.VITE_HOUSE_ID;
+            const playCapId = import.meta.env.VITE_PLAY_CAP_ID;
+            const stake = this.getCurrentStake();
+            // console.log(gameId);
+            // console.log(tx.object(gameId));
+            // tx.object(Inputs.ObjectRef({ digest, objectId, version }));
 
-    //         const result = await executeSponsoredTransact(sponsorSignature.bytes, senderSignature.signature, sponsorSignature.signature);
+            const tx = new Transaction();
 
-    //         const interactEvent = result.events?.find(x => x.type == INTERACT_EVENT_TYPE);
-    //         let eventFound = false;
+            tx.moveCall({
+                target: INTERACT_FUNCTION_TARGET,
+                arguments: [
+                    tx.object(gameId),
+                    tx.object(registryId),
+                    tx.object(balanceManagerId),
+                    tx.object(houseId),
+                    tx.object(playCapId),
+                    tx.pure.string(START_GAME_ACTION),
+                    tx.pure.u64(stake),
+                    tx.object('0x8'), // random
+                ],
+            });
 
-    //         if (interactEvent) {
-    //             eventFound = true;
-    //             const parsedEvent = interactEvent.parsedJson as InteractedWithGameModel;
-    //             this.scene.events.emit('interacted-event', parsedEvent);
+            const result = await signAndExecuteTransaction(tx);
 
-    //         }
+            const interactEvent = result.events?.find(x => x.type == INTERACT_EVENT_TYPE);
 
-    //         waitForTransaction(result.digest).then(result => {
-    //             const interactEvent = result.events?.find(x => x.type == INTERACT_EVENT_TYPE);
+            if (interactEvent) {
+                const parsedEvent = parseInteractedWithGameModel(interactEvent.parsedJson) as InteractedWithGameModel;
+                this.scene.events.emit('interacted-event', parsedEvent);
+            }
+        }
+        catch (error) {
+            console.error(error);
+            this.scene.events.emit('error-event', error instanceof Error ? error.message : "An unknown error occurred");
+        }
+    }
 
-    //             if (interactEvent && !eventFound) {
-    //                 const parsedEvent = interactEvent.parsedJson as InteractedWithGameModel;
-    //                 this.scene.events.emit('interacted-event', parsedEvent);
-    //             }
-    //         })
-    //             .catch((error) => {
-    //                 // console.error(error.message);
-    //                 // handleError(error.message);
-    //                 throw error;
-    //             });
-    //     } catch (error) {
-    //         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //         // @ts-ignore
-    //         console.error(error.message);
-    //         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //         // @ts-ignore
-    //         // handleError(error.message);
-    //     }
-    // }
+    getCurrentBalance(): bigint | undefined {
+        return this.scene.registry.get(BALANCE_DATA);
+    }
+
+    getCurrentContext(): PiggyBankContextModel | undefined {
+        return this.scene.registry.get(CONTEXT_DATA);
+    }
+
+    getCurrentStake(): number {
+        return this.scene.registry.get(STAKE_DATA);
+    }
+}
+
+
+function parseInteractedWithGameModel(raw: any): InteractedWithGameModel {
+    return {
+        old_balance: BigInt(raw.old_balance),
+        new_balance: BigInt(raw.new_balance),
+        balance_manager_id: raw.balance_manager_id,
+        context: {
+            stake: raw.context.stake,
+            status: raw.context.status,
+            win: BigInt(raw.context.win),
+            current_position: raw.context.current_position,
+        },
+    };
 }

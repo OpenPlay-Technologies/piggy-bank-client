@@ -61,12 +61,12 @@ export default class MockBackendService implements IBackendService {
         const winAmount = this.getPayoutForPosition(currentPosition);
 
         // Note: the balance was already visually deducted in the UI
-        const oldBalance = currentBalance - BigInt(winAmount);
+        const newBalance = currentBalance + BigInt(winAmount);
 
 
         const event = {
-            old_balance: oldBalance,
-            new_balance: currentBalance,
+            old_balance: currentBalance,
+            new_balance: newBalance,
             context: {
                 stake: this.getCurrentStake(),
                 status: GAME_FINISHED_STATUS,
@@ -92,19 +92,18 @@ export default class MockBackendService implements IBackendService {
         const currentBalance = this.getCurrentBalance() ?? 0n;
         const stakeAmount = this.getCurrentStake();
 
-        // if (currentBalance < BigInt(stakeAmount)) {
-        //     return Promise.resolve();
-        // }
+        if (currentBalance < BigInt(stakeAmount)) {
+            return Promise.resolve();
+        }
         
-        // Note: the balance was already visually deducted in the UI
-        const oldBalance = currentBalance + BigInt(stakeAmount);
+        const newBalance = currentBalance - BigInt(stakeAmount);
 
         var event: InteractedWithGameModel;
 
         if (this.mayAdvance()) {
             event = {
-                old_balance: oldBalance,
-                new_balance: currentBalance,
+                old_balance: currentBalance,
+                new_balance: newBalance,
                 context: {
                     stake: this.getCurrentStake(),
                     status: GAME_ONGOING_STATUS,
@@ -116,8 +115,8 @@ export default class MockBackendService implements IBackendService {
         }
         else {
             event = {
-                old_balance: oldBalance,
-                new_balance: currentBalance,
+                old_balance: currentBalance,
+                new_balance: newBalance,
                 context: {
                     stake: this.getCurrentStake(),
                     status: GAME_FINISHED_STATUS,

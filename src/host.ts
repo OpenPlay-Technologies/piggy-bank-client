@@ -1,11 +1,10 @@
 import { getEnvKeypair } from "./utils/keypair";
-import { isMessage, Message, TX_SIGN_AND_EXECUTE_REQUEST, TX_SIGN_AND_EXECUTE_RESPONSE } from "./openplay-connect/messages";
+import { INIT_REQUEST, INIT_RESPONSE, isMessage, Message, TX_SIGN_AND_EXECUTE_REQUEST, TX_SIGN_AND_EXECUTE_RESPONSE } from "./openplay-connect/messages";
 import { Transaction } from "@mysten/sui/transactions";
 import { getSuiClient } from "./sui/sui-client";
 import { INTERACT_FUNCTION_TARGET } from "./sui/constants/piggybank-constants";
 
 // Generate or retrieve the keypair
-// TODO: take keypair from env variable instead of localstorage
 const keypair = getEnvKeypair();
 console.log("Loaded Keypair:", keypair.toSuiAddress());
 
@@ -16,6 +15,7 @@ const iframe = document.getElementById('gameIframe') as HTMLIFrameElement;
 
 // When the iframe is loaded, send an initial message to the game
 iframe.onload = () => {
+  // Listen to incoming messages from the iframe
   iframe.contentWindow?.addEventListener("message", (event: MessageEvent) => {
     const data = event.data;
     const window = iframe.contentWindow;
@@ -35,11 +35,34 @@ iframe.onload = () => {
       case TX_SIGN_AND_EXECUTE_RESPONSE:
         // Handle TX_SIGN_AND_EXECUTE_RESPONSE here
         break;
+      case INIT_RESPONSE:
+        if (data.isSuccessful) {
+          console.log("Init successful");
+        }
+        else {
+          console.error("Init failed:", data.errorMsg);
+        }
+        break;
       default:
         // This case should never happen due to our type guard.
         break;
     }
   });
+
+  // Send the init
+  const window = iframe.contentWindow;
+  if (!window) {
+    return;
+  }
+
+  const initData = {
+    type: INIT_REQUEST,
+    balanceManagerId: (import .meta.env.VITE_BALANCE_MANAGER_ID as string),
+    houseId: (import .meta.env.VITE_HOUSE_ID as string),
+    playCapId: (import .meta.env.VITE_PLAY_CAP_ID as string),
+  };
+  console.log("Sending init data:", initData);
+  window.postMessage(initData, '*');
 }
 
 async function handleSignRequest(window: Window, data: Message) {
@@ -60,7 +83,7 @@ async function handleSignRequest(window: Window, data: Message) {
       };
       window.postMessage(postMessage, '*');
     }
-  
+
     const result = await client.signAndExecuteTransaction({
       signer: keypair, transaction: tx, options: {
         showRawEffects: true,
@@ -68,9 +91,9 @@ async function handleSignRequest(window: Window, data: Message) {
         showEvents: true,
       }
     });
-  
+
     console.log("Transaction Result:", result);
-  
+
     const postMessage: Message = {
       type: TX_SIGN_AND_EXECUTE_RESPONSE,
       requestId: data.request_id,

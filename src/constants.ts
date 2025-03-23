@@ -21,6 +21,7 @@ export const CASH_OUT_REQUESTED_EVENT = 'cash-out-requested-event';
 export const BALANCE_UPDATED_EVENT = 'balance-updated-event';
 export const STAKE_CHANGED_EVENT = 'stake-changed-event';
 export const STATUS_UPDATED_EVENT = 'status-updated-event';
+export const INIT_DATA_READY_EVENT = 'init-data-ready-event';
 
 // === Data ===
 export const CONTEXT_DATA = 'context-data';

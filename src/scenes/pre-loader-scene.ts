@@ -5,6 +5,7 @@ import { fetchBalanceManager } from '../sui/queries/balance-manager';
 import { fetchGame, fetchContext } from '../sui/queries/piggy-bank';
 import { mockFetchBalanceManager, mockFetchContext, mockFetchGame } from '../components/mock-backend-service';
 import { GAME_DATA, BALANCE_MANAGER_DATA, CONTEXT_DATA, BALANCE_DATA } from '../constants';
+import { OpenPlayGame } from '../game';
 
 export class Preloader extends Scene {
     gameDataPromise: Promise<GameModel | undefined> | undefined;
@@ -41,6 +42,13 @@ export class Preloader extends Scene {
     }
 
     preload(): void {
+
+        const game = this.game as OpenPlayGame;
+
+        if (!game.initData) {
+            throw new Error('Game not initialized');
+        }
+
         // ---------------------------
         // Load assets
         // ---------------------------
@@ -119,7 +127,7 @@ export class Preloader extends Scene {
         if (!(import.meta.env.VITE_DUMMY_BACKEND === 'true')) {
             console.log("fetching game and balance manager data");
             this.gameDataPromise = fetchGame(import.meta.env.VITE_GAME_ID);
-            this.balanceManagerDataPromise = fetchBalanceManager(import.meta.env.VITE_BALANCE_MANAGER_ID);
+            this.balanceManagerDataPromise = fetchBalanceManager(game.initData.balanceManagerId);
         } else {
             console.log("using dummy backend");
             this.gameDataPromise = mockFetchGame();

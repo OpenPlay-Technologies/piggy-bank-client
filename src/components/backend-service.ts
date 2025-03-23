@@ -4,6 +4,7 @@ import { ADVANCE_ACTION, CASH_OUT_ACTION, INTERACT_EVENT_TYPE, INTERACT_FUNCTION
 import { signAndExecuteTransaction } from "../openplay-connect/functions";
 import { InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import { BALANCE_DATA, CONTEXT_DATA, STAKE_DATA } from "../constants";
+import { OpenPlayGame } from "../game";
 
 export interface IBackendService {
     handleAdvance(): Promise<void>;
@@ -22,12 +23,18 @@ export default class BackendService implements IBackendService {
     }
 
     public async handleCashOut(): Promise<void> {
+        const game = this.scene.game as OpenPlayGame;
+
+        if (!game.initData) {
+            throw new Error('Game not initialized');
+        }
+
         try {
             const gameId = import.meta.env.VITE_GAME_ID;
             const registryId = import.meta.env.VITE_REGISTRY_ID;
-            const balanceManagerId = import.meta.env.VITE_BALANCE_MANAGER_ID;
-            const houseId = import.meta.env.VITE_HOUSE_ID;
-            const playCapId = import.meta.env.VITE_PLAY_CAP_ID;
+            const balanceManagerId = game.initData.balanceManagerId;
+            const houseId = game.initData.houseId;
+            const playCapId = game.initData.playCapId;
 
             // console.log(gameId);
             // console.log(tx.object(gameId));
@@ -69,12 +76,17 @@ export default class BackendService implements IBackendService {
 
     // Called when the button is clicked in the Phaser scene
     public async handleAdvance(): Promise<void> {
+        const game = this.scene.game as OpenPlayGame;
+
+        if (!game.initData) {
+            throw new Error('Game not initialized');
+        }
         try {
             const gameId = import.meta.env.VITE_GAME_ID;
             const registryId = import.meta.env.VITE_REGISTRY_ID;
-            const balanceManagerId = import.meta.env.VITE_BALANCE_MANAGER_ID;
-            const houseId = import.meta.env.VITE_HOUSE_ID;
-            const playCapId = import.meta.env.VITE_PLAY_CAP_ID;
+            const balanceManagerId = game.initData.balanceManagerId;
+            const houseId = game.initData.houseId;
+            const playCapId = game.initData.playCapId;
 
             // console.log(gameId);
             // console.log(tx.object(gameId));
@@ -99,10 +111,8 @@ export default class BackendService implements IBackendService {
             const result = await signAndExecuteTransaction(tx);
 
             const interactEvent = result.events?.find(x => x.type == INTERACT_EVENT_TYPE);
-            let eventFound = false;
 
             if (interactEvent) {
-                eventFound = true;
                 const parsedEvent = parseInteractedWithGameModel(interactEvent.parsedJson) as InteractedWithGameModel;
                 this.scene.events.emit('interacted-event', parsedEvent);
             }

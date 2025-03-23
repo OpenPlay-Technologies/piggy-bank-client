@@ -61,7 +61,7 @@ export class OpenPlayGame extends Phaser.Game {
                             isSuccessful: false,
                             errorMsg: "Init data already received",
                         };
-                        window.postMessage(responseData, '*');
+                        window.parent.postMessage(responseData, '*');
                         return;
                     }
                     else {
@@ -77,7 +77,7 @@ export class OpenPlayGame extends Phaser.Game {
                             type: INIT_RESPONSE,
                             isSuccessful: true,
                         };
-                        window.postMessage(responseData, '*');
+                        window.parent.postMessage(responseData, '*');
                         return;
                     }
                     break;

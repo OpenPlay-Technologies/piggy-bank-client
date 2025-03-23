@@ -47,6 +47,6 @@ export function signAndExecuteTransaction(
 
         // Attach the listener before sending the message.
         window.addEventListener('message', messageHandler);
-        window.postMessage(postMessage, '*');
+        window.parent.postMessage(postMessage, '*');
     });
 }

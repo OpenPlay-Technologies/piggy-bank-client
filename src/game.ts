@@ -46,7 +46,7 @@ export class OpenPlayGame extends Phaser.Game {
     constructor(config: Phaser.Types.Core.GameConfig) {
         super(config);
         // Listen for the init message
-        window.addEventListener('message', (event: MessageEvent) => {
+        window.parent.addEventListener('message', (event: MessageEvent) => {
             const data = event.data;
             if (!isMessage(data)) {
                 return;

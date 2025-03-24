@@ -129,12 +129,18 @@ export default class BackendService implements IBackendService {
 
     // Called when the button is clicked in the Phaser scene
     public async handleStartGame(): Promise<void> {
+        const game = this.scene.game as OpenPlayGame;
+
+        if (!game.initData) {
+            throw new Error('Game not initialized');
+        }
+
         try {
             const gameId = import.meta.env.VITE_GAME_ID;
             const registryId = import.meta.env.VITE_REGISTRY_ID;
-            const balanceManagerId = import.meta.env.VITE_BALANCE_MANAGER_ID;
-            const houseId = import.meta.env.VITE_HOUSE_ID;
-            const playCapId = import.meta.env.VITE_PLAY_CAP_ID;
+            const balanceManagerId = game.initData.balanceManagerId;
+            const houseId = game.initData.houseId;
+            const playCapId = game.initData.playCapId;
             const stake = this.getCurrentStake();
             // console.log(gameId);
             // console.log(tx.object(gameId));

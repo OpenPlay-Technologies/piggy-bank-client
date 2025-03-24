@@ -14,7 +14,7 @@ export default defineConfig(({ command }) => {
 
   return {
     server: {
-        open: '/dev-index.html',
+        open: '/host.html',
     },
     build: {
       rollupOptions: {

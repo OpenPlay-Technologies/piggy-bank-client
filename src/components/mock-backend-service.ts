@@ -23,7 +23,7 @@ const gameData: GameModel = {
     steps_payout_bps: [12000, 15000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000],
     // steps_payout_bps: [10000, 15000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000],
     // steps_payout_bps: [10000, 15000],
-    success_rate_bps: 7000,
+    success_rate_bps: 10000,
     contexts: {
         fields: {
             id: {

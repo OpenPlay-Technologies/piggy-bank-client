@@ -22,9 +22,9 @@ const iframe = document.getElementById("gameIframe") as HTMLIFrameElement;
 
 // Listen for messages on the parent window
 window.addEventListener("message", (event: MessageEvent) => {
-  // Log the origin for debugging
-  console.log("Received message from origin:", event.origin);
-  console.log("Received message:", event.data);
+  // // Log the origin for debugging
+  // console.log("Received message from origin:", event.origin);
+  // console.log("Received message:", event.data);
 
   // Validate the message format
   if (!isMessage(event.data)) return;

@@ -12,14 +12,28 @@ export default function setupPiggy(scene: Main) {
     scene.pig.setScale(0.4);
     // Animations
     const frameNames1 = scene.anims.generateFrameNames('piggy', {
-        start: 1, end: 8, zeroPad: 0,
+        start: 0, end: 8, zeroPad: 0,
         prefix: 'Animation 1-', suffix: '.png'
     });
     scene.anims.create({ key: 'blink', frames: frameNames1, frameRate: 8, repeat: -1, repeatDelay: 2000, delay: 2000 });
-    scene.pig.anims.play('blink');
     const frameNames2 = scene.anims.generateFrameNames('piggy', {
-        start: 1, end: 8, zeroPad: 0,
+        start: 0, end: 15, zeroPad: 0,
         prefix: 'Animation 2-', suffix: '.png'
     });
-    scene.anims.create({ key: 'walk', frames: frameNames2, frameRate: 16, repeat: -1 });
+    scene.anims.create({ key: 'walk', frames: frameNames2, frameRate: 24, repeat: -1 });
+    const frameNames3 = scene.anims.generateFrameNames('piggy-2', {
+        start: 0, end: 15, zeroPad: 0,
+        prefix: 'Animation 3-', suffix: '.png'
+    });
+    scene.anims.create({ key: 'death', frames: frameNames3, frameRate: 22 });
+    const frameNames4 = scene.anims.generateFrameNames('piggy-2', {
+        start: 0, end: 15, zeroPad: 0,
+        prefix: 'Animation 4-', suffix: '.png'
+    });
+    scene.anims.create({ key: 'small-jump', frames: frameNames4, frameRate: 24 });
+    const frameNames5 = scene.anims.generateFrameNames('piggy-2', {
+        start: 0, end: 95, zeroPad: 0,
+        prefix: 'Animation 5-', suffix: '.png'
+    });
+    scene.anims.create({ key: 'big-jump', frames: frameNames5, frameRate: 40 });
 }

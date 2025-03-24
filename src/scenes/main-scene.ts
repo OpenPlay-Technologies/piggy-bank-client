@@ -27,8 +27,6 @@ export class Main extends Scene {
     leftEnd: Phaser.GameObjects.Image | undefined;
     safespotColumns: Phaser.GameObjects.Container[] | undefined;
     worldWidth: number = 0;
-    currentKnife: Phaser.GameObjects.Image | undefined;
-    knifeTween: Phaser.Tweens.Tween | undefined;
 
     status: PiggyState = PiggyState.NO_GAME_IDLE;
     queuedAction: ActionType | undefined;
@@ -131,6 +129,10 @@ export class Main extends Scene {
         else if (this.status === PiggyState.GAME_ONGOING_IDLE) {
             this.updateVisualBalance((this.getCurrentBalance() || 0n) + this.getPayoutForPosition(this.currentSpot));
             this.setStatus(PiggyState.CASHING_OUT);
+            this.pig?.stop();
+            this.pig?.play('big-jump').once('animationcomplete', () => {
+                this?.pig?.play('blink');
+            });
             this.backendService?.handleCashOut();
         }
         else {
@@ -229,33 +231,11 @@ export class Main extends Scene {
             targets: this.pig,
             x: midpointX,
             y: midpointY,
-            duration: 1500,
+            duration: 2500,
             onStart: () => {
 
                 this.pig?.anims.play('walk');
             },
-        });
-
-        // Compute knife x coordinate based on currentSpot.
-        // If the piggy is at the left end, fall on the border between leftEnd and the first safe spot.
-        let knifeX: number;
-        if (this.currentSpot === EMPTY_POSITION) {
-            knifeX = COLUMN_WIDTH; // Border between leftEnd (at COLUMN_WIDTH/2) and first safe spot.
-        } else {
-            // For piggy on safe spot column index i, the border to the next column is at (i+2)*COLUMN_WIDTH.
-            knifeX = (this.currentSpot + 2) * COLUMN_WIDTH;
-        }
-        // Create the knife above the scene.
-        this.currentKnife = this.add.image(knifeX, -50, "knife").setOrigin(0.5);
-        this.currentKnife.setScale(0.8);
-        this.currentKnife.setDepth(20);
-
-        // Animate the knife falling.
-        this.knifeTween = this.tweens.add({
-            targets: this.currentKnife,
-            y: Y_POS - 200,  // Adjust this value to where you want the knife to end up
-            duration: 1500,
-            ease: 'linear',
         });
     }
 
@@ -279,14 +259,6 @@ export class Main extends Scene {
             this.walkTwig.stop();
             this.walkTwig = undefined;
         }
-        if (this.knifeTween) {
-            this.knifeTween.stop();
-            this.knifeTween = undefined;
-        }
-        if (this.currentKnife) {
-            this.currentKnife.destroy();
-            this.currentKnife = undefined;
-        }
         this.queuedAction = undefined;
 
         // === Reset piggy ===
@@ -294,7 +266,8 @@ export class Main extends Scene {
         this.pig?.setX(pigX);
         this.pig?.setAlpha(1);
         this.pig?.stop();
-        this.pig?.setFrame(0);
+        this.pig?.anims.play('blink');
+        this.pig?.setTexture("piggy");
 
         // === Reset platforms ===
         if (this.safespotColumns) {
@@ -341,6 +314,20 @@ export class Main extends Scene {
                         return;
                     }
 
+                    // Small jump if the piggy is not at the last spot
+                    // otherwise the big jump
+                    this.pig?.anims.stop();
+                    if (this.currentSpot < this.safespotColumns.length - 1) {
+                        this.pig?.play('small-jump').once('animationcomplete', () => {
+                            this.pig?.anims.play('blink');
+                        });
+                    }
+                    else {
+                        this.pig?.play('big-jump').once('animationcomplete', () => {
+                            this.loadGame();
+                        });
+                    }
+
                     // Get the absolute position of the platform
                     const destX = platform.x;
                     const destY = platform.y;
@@ -366,23 +353,6 @@ export class Main extends Scene {
                         },
                         onComplete: () => {
                             // Instead of abruptly removing the knife, let it fall off-screen.
-                            const knifeRef = this.currentKnife;
-                            if (knifeRef) {
-                                this.tweens.add({
-                                    targets: this.currentKnife,
-                                    y: WORLD_HEIGHT, // let the knife fall until the bottom of the world
-                                    duration: 100,   // adjust duration as needed for a smooth fall
-                                    ease: 'Linear',
-                                    onComplete: () => {
-                                        knifeRef.destroy();
-                                        if (this.currentKnife === knifeRef) {
-                                            this.currentKnife = undefined;
-                                        }
-                                    }
-                                });
-                            }
-                            this.pig?.anims.stop();
-                            this.pig?.setFrame(0);
                             this.setStatus(PiggyState.GAME_ONGOING_IDLE);
                             let startColor = Phaser.Display.Color.ValueToColor(0xffffff);
                             let endColor = Phaser.Display.Color.ValueToColor(0x555555);
@@ -405,9 +375,6 @@ export class Main extends Scene {
                             if (interact.context.status === GAME_FINISHED_STATUS) {
                                 // End the game
                                 this.setStatus(PiggyState.WINNING);
-                                this.time.delayedCall(500, () => {
-                                    this.loadGame();
-                                });
                             }
                             else {
                                 // Keep going
@@ -422,36 +389,10 @@ export class Main extends Scene {
                     console.log("Game over");
                     // Process the loss
                     this.setStatus(PiggyState.DYING);
-                    const dieAnimation = () => {
-                        if (this.currentKnife) {
-                            this.knifeTween?.stop();
-                            this.knifeTween = this.tweens.add({
-                                targets: this.currentKnife,
-                                y: this.pig?.y,
-                                duration: 300,
-                                ease: 'Linear',
-                                onComplete: () => {
-                                    this.pig?.setAlpha(0);
-                                    this.time.delayedCall(500, () => {
-                                        this.loadGame();
-                                        this.currentKnife?.destroy();
-                                        this.currentKnife = undefined;
-                                    });
-                                }
-                            });
-                        }
-                    }
-                    // Instead of stopping the piggy tween immediately, let it finish its halfway move.
-                    if (this.walkTwig && this.walkTwig.isPlaying()) {
-                        // Once the piggy reaches the halfway point, drop the knife.
-
-                        this.walkTwig.setTimeScale(10);  // Increase the time scale factor to speed it up.
-                        this.walkTwig.once('complete', () => {
-                            dieAnimation();
-                        });
-                    } else {
-                        dieAnimation();
-                    }
+                    this.walkTwig?.stop();  // Increase the time scale factor to speed it up.
+                    this.pig?.anims.play('death').once('animationcomplete', () => {
+                        this.loadGame();
+                    });
 
                 }
                 break;

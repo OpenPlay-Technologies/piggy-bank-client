@@ -31,14 +31,15 @@ export default class BackendService implements IBackendService {
 
         try {
             const gameId = import.meta.env.VITE_GAME_ID;
+            console.log("gameId", gameId);
             const registryId = import.meta.env.VITE_REGISTRY_ID;
+            console.log("registryId", registryId);
             const balanceManagerId = game.initData.balanceManagerId;
+            console.log("balanceManagerId", balanceManagerId);
             const houseId = game.initData.houseId;
+            console.log("houseId", houseId);
             const playCapId = game.initData.playCapId;
-
-            // console.log(gameId);
-            // console.log(tx.object(gameId));
-            // tx.object(Inputs.ObjectRef({ digest, objectId, version }));
+            console.log("playCapId", playCapId);
 
             const tx = new Transaction();
 
@@ -55,6 +56,8 @@ export default class BackendService implements IBackendService {
                     tx.object('0x8'), // random
                 ],
             });
+
+            console.log("tx", tx.serialize);
 
             const result = await signAndExecuteTransaction(tx);
 

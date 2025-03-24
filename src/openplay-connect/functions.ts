@@ -8,9 +8,6 @@ export function signAndExecuteTransaction(
     timeoutMs = 5000
 ): Promise<SuiTransactionBlockResponse> {
     return new Promise(async (resolve, reject) => {
-        console.log(tx);
-        console.log(tx.serialize());
-        console.log(await tx.toJSON());
         const json = await tx.toJSON();
 
         const requestId = uuidv4();

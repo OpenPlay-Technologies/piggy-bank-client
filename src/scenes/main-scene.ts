@@ -267,7 +267,7 @@ export class Main extends Scene {
         this.pig?.setAlpha(1);
         this.pig?.stop();
         this.pig?.anims.play('blink');
-        this.pig?.setTexture("piggy");
+        this.pig?.setTexture("piggy-animations", "1-0.png");
 
         // === Reset platforms ===
         if (this.safespotColumns) {
@@ -318,7 +318,8 @@ export class Main extends Scene {
                     // otherwise the big jump
                     this.pig?.anims.stop();
                     if (this.currentSpot < this.safespotColumns.length - 1) {
-                        this.pig?.play('small-jump').once('animationcomplete', () => {
+                        this.pig?.play('victory').once('animationcomplete', () => {
+                            this.pig?.setTexture("piggy-animations", "1-0.png");
                             this.pig?.anims.play('blink');
                         });
                     }

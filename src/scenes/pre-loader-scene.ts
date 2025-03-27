@@ -52,8 +52,9 @@ export class Preloader extends Scene {
         // ---------------------------
         // Load assets
         // ---------------------------
-        this.load.multiatlas('piggy', 'assets/spritesheets/piggy.json', 'assets/spritesheets');
-        this.load.multiatlas('piggy-2', 'assets/spritesheets/piggy-2.json', 'assets/spritesheets');
+        // this.load.multiatlas('piggy', 'assets/spritesheets/piggy.json', 'assets/spritesheets');
+        // this.load.multiatlas('piggy-2', 'assets/spritesheets/piggy-2.json', 'assets/spritesheets');
+        this.load.multiatlas('piggy-animations', 'assets/spritesheets/piggy-animations.json', 'assets/spritesheets');
         this.load.image('leftEnd', 'assets/background/LeftEnd.png');
         this.load.image('TileableRoad_Bar', 'assets/background/TileableRoad_Bar.png');
         this.load.image('Point', 'assets/background/Point.png');

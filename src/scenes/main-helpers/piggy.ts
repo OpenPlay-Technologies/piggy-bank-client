@@ -27,7 +27,7 @@ export default function setupPiggy(scene: Main) {
     });
     scene.anims.create({ key: 'death', frames: frameNames3, frameRate: 22 });
     const frameNames4 = scene.anims.generateFrameNames('piggy-animations', {
-        start: 0, end: 21, zeroPad: 0,
+        start: 0, end: 35, zeroPad: 0,
         prefix: '4-', suffix: '.png'
     });
     scene.anims.create({ key: 'victory', frames: frameNames4, frameRate: 24 });

@@ -34,6 +34,7 @@ const getGameConfig = (): Types.Core.GameConfig => {
                 debug: false
             },
         },
+        antialias: true,
     };
 
     return config;

@@ -39,7 +39,7 @@ export class Preloader extends Scene {
 
     init(): void {
         // No rectangle loading bar; we'll use the loader spritesheet.
-        const { width, height } = this.cameras.main;
+        const { width } = this.cameras.main;
         const baseLogoWidth = 800; // base width for scaling
         const scaleFactor = width < baseLogoWidth ? width / baseLogoWidth : 1;
         this.cameras.main.setZoom(scaleFactor);

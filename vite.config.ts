@@ -9,12 +9,14 @@ export default defineConfig(({ command }) => {
 
   if (command === 'serve') {
     input.host = resolve(__dirname, 'host.html');
+    input['host-mobile'] = resolve(__dirname, 'host-mobile.html');
     input.dashboard = resolve(__dirname, 'dev-index.html');
   }
 
   return {
     server: {
-        open: '/host.html',
+      // You can change this to '/host-mobile.html' if you want the mobile version to open by default.
+      open: '/host.html',
     },
     build: {
       rollupOptions: {

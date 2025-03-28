@@ -57,6 +57,9 @@ iframe.onload = () => {
     return;
   }
 
+  const isMobileHost = window.location.pathname.includes('host-mobile.html');
+  console.log("Host is mobile:", isMobileHost);
+
   const initData = {
     type: INIT_REQUEST,
     balanceManagerId: import.meta.env.VITE_BALANCE_MANAGER_ID as string,

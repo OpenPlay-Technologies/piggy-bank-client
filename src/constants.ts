@@ -29,3 +29,6 @@ export const BALANCE_DATA = 'balance-data';
 export const BALANCE_MANAGER_DATA = 'balance-manager-data';
 export const GAME_DATA = 'game-data';
 export const STAKE_DATA = 'stake-data';
+
+// === UI ===
+export const MOBILE_UI_HEIGHT = 250;

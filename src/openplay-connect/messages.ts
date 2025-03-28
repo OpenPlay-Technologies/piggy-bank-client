@@ -33,6 +33,7 @@ export type Message =
         houseId: string;
         playCapId: string;
         referralId?: string;
+        mobile?: boolean;
     }
     |
     {

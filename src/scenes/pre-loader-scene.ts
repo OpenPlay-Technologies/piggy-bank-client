@@ -65,6 +65,7 @@ export class Preloader extends Scene {
         this.load.image('hanging_meat_Extra', 'assets/background/hanging_meat_Extra.png');
         this.load.image('meat', 'assets/background/meat.png');
         this.load.image('knife', 'assets/props/knife.png');
+        this.load.image('piggy-bank-background', 'assets/background/piggy-bank-background.png');
 
         // ---------------------------
         // Create animations

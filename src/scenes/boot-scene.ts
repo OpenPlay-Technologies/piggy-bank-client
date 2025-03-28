@@ -1,6 +1,4 @@
 import { Scene } from 'phaser';
-import { OpenPlayGame } from '../game';
-import { INIT_DATA_READY_EVENT } from '../constants';
 
 export class Boot extends Scene {
     constructor() {
@@ -15,26 +13,6 @@ export class Boot extends Scene {
     }
 
     create() {
-        const gameInstance = this.game as OpenPlayGame;
-
-        // Check if the init data is already available
-        if (gameInstance.initData) {
-            // Proceed to Preloader scene immediately
-            this.scene.start('Preloader');
-        } else {
-            // Add a waiting message in the center of the screen
-            const { width, height } = this.cameras.main;
-            this.add
-                .text(width / 2, height / 2, 'Game not initialized', {
-                    font: '20px Arial',
-                    color: '#ffffff'
-                })
-                .setOrigin(0.5);
-
-            // Wait until the init data is received
-            gameInstance.events.once(INIT_DATA_READY_EVENT, () => {
-                this.scene.start('Preloader');
-            });
-        }
+        this.scene.start('Preloader');
     }
 }

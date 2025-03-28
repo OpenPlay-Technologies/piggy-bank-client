@@ -35,6 +35,7 @@ const getGameConfig = (): Types.Core.GameConfig => {
             },
         },
         antialias: true,
+        roundPixels: true,
     };
 
     return config;

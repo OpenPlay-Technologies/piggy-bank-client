@@ -36,6 +36,7 @@ const getGameConfig = (): Types.Core.GameConfig => {
         },
         antialias: true,
         roundPixels: true,
+        mipmapFilter: "LINEAR_MIPMAP_LINEAR"
     };
 
     return config;
@@ -72,6 +73,11 @@ window.addEventListener('message', (event: MessageEvent) => {
                     referralId: data.referralId,
                 };
                 game = new OpenPlayGame(getGameConfig(), initData);
+                let context = game.canvas.getContext('2d');
+                if (context){
+                    context.imageSmoothingEnabled = true;
+                    context.imageSmoothingQuality = 'high';
+                }
                 game.events.emit(INIT_DATA_READY_EVENT);
                 const responseData = {
                     type: INIT_RESPONSE,

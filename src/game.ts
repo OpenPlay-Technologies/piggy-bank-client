@@ -147,7 +147,7 @@ export class OpenPlayGame extends Phaser.Game {
 // Custom fullscreen high DPI scaling implementation with TypeScript
 const setupFullscreenHighDPIScaling = (game: Phaser.Game): (() => void) => {
     // Get the initial device pixel ratio
-    let currentDPR: number = window.devicePixelRatio || 1;
+    // let currentDPR: number = window.devicePixelRatio || 1;
 
     // Reference to the canvas element
     const canvas: HTMLCanvasElement = game.canvas;
@@ -216,7 +216,7 @@ const setupFullscreenHighDPIScaling = (game: Phaser.Game): (() => void) => {
         // });
 
         // Store the current DPR
-        currentDPR = dpr;
+        // currentDPR = dpr;
     };
 
     // Apply initial sizing

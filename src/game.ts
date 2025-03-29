@@ -1,5 +1,5 @@
 import { Types } from "phaser";
-import { HEIGHT, INIT_DATA_READY_EVENT, WIDTH } from "./constants";
+import { INIT_DATA_READY_EVENT } from "./constants";
 import { Boot } from "./scenes/boot-scene";
 import { Main } from "./scenes/main-scene";
 import { Preloader } from "./scenes/pre-loader-scene";

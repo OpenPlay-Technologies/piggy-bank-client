@@ -65,39 +65,31 @@ export class Main extends Scene {
         this.scene.launch('GameUIScene');
     }
 
-    resizeCamera() {
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
-        // const pixelRatio = window.devicePixelRatio || 1;
-        
-        let viewportHeight = screenHeight - MOBILE_UI_HEIGHT;
-        
-        // Instead of zooming the camera, adjust the game's display size
-        this.scale.setGameSize(screenWidth, viewportHeight);
-        
-        // Maintain aspect ratio by setting the world boundaries
-        const worldWidth = (WORLD_HEIGHT * screenWidth) / viewportHeight;
-        
-        // Reset the camera
-        this.cameras.main.setZoom(1);
-        this.cameras.main.setViewport(0, 0, screenWidth, viewportHeight);
-        
-        // Set the camera bounds to new calculated world size
-        this.cameras.main.setBounds(0, 0, worldWidth, WORLD_HEIGHT);
-        
-        // You'll need to position your game objects according to the new world width
-        // This might involve repositioning elements
-    }
+    // resizeCamera() {
+    //     const screenWidth = window.innerWidth;
+    //     const screenHeight = window.innerHeight;
+
+
+    //     let viewportHeight, zoomFactor;
+
+    //     viewportHeight = screenHeight - MOBILE_UI_HEIGHT;
+    //     zoomFactor = viewportHeight / WORLD_HEIGHT;
+    //     // Set the viewport to fill the device width and the calculated height
+    //     this.cameras.main.setViewport(0, 0, screenWidth, viewportHeight);
+
+    //     // Apply the zoom factor so that WORLD_HEIGHT fits into the viewport height
+    //     this.cameras.main.setZoom(zoomFactor);
+    // }
 
     create() {
         this.physics.world.setBounds(0, 0, this.worldWidth, WORLD_HEIGHT);
         this.cameras.main.setBounds(0, 0, this.worldWidth, WORLD_HEIGHT);
 
         // Initialize the viewport and zoom
-        this.resizeCamera();
+        // this.resizeCamera();
 
         // Listen for resize events and UI ready event
-        this.scale.on('resize', this.resizeCamera, this);
+        // this.scale.on('resize', this.resizeCamera, this);
 
         // === Left End Column ===
         // Place the left end asset at the center of the first column.

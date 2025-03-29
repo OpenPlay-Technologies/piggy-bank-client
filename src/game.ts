@@ -153,16 +153,16 @@ const setupFullscreenHighDPIScaling = (game: Phaser.Game): (() => void) => {
     const canvas: HTMLCanvasElement = game.canvas;
 
     // Get the parent element - in your case it's #game-container
-    const parent: HTMLElement = document.getElementById('game-container') as HTMLElement;
+    // const parent: HTMLElement = document.getElementById('game-container') as HTMLElement;
 
     // Function to update canvas dimensions to fill the screen
     const updateCanvasSize = (): void => {
         // Make parent fill the viewport
-        parent.style.width = '100vw';
-        parent.style.height = '100vh';
-        parent.style.margin = '0';
-        parent.style.padding = '0';
-        parent.style.overflow = 'hidden';
+        // parent.style.width = '100vw';
+        // parent.style.height = '100vh';
+        // parent.style.margin = '0';
+        // parent.style.padding = '0';
+        // parent.style.overflow = 'hidden';
 
         // Get the available screen dimensions
         const screenWidth: number = window.innerWidth;

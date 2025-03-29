@@ -2,7 +2,7 @@
 import { Scene } from "phaser";
 import BackendService, { IBackendService } from "../components/backend-service";
 import { Dialog } from "../components/dialog";
-import { ADVANCE_REQUESTED_EVENT, BALANCE_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, ERROR_EVENT, GAME_DATA, HEIGHT, INTERACTED_EVENT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
+import { ADVANCE_REQUESTED_EVENT, BALANCE_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, ERROR_EVENT, GAME_DATA, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
 import { GAME_ONGOING_STATUS, GAME_FINISHED_STATUS, EMPTY_POSITION } from "../sui/constants/piggybank-constants";
 import { GameModel, InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import MockBackendService from "../components/mock-backend-service";
@@ -65,31 +65,49 @@ export class Main extends Scene {
         this.scene.launch('GameUIScene');
     }
 
-    // resizeCamera() {
-    //     const screenWidth = window.innerWidth;
-    //     const screenHeight = window.innerHeight;
+    resizeCamera() {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+
+        let viewportHeight, zoomFactor;
 
 
-    //     let viewportHeight, zoomFactor;
+        // const portrait = isPortrait(screenWidth, screenHeight);
+        // if (!portrait) {
+        //     let mobileUi = this.scene.get('MobileUIScene');
+        //     mobileUi.cameras.main.setVisible(true);
+        //     let desktopUi = this.scene.get('DesktopUIScene');
+        //     desktopUi.cameras.main.setVisible(false);
 
-    //     viewportHeight = screenHeight - MOBILE_UI_HEIGHT;
-    //     zoomFactor = viewportHeight / WORLD_HEIGHT;
-    //     // Set the viewport to fill the device width and the calculated height
-    //     this.cameras.main.setViewport(0, 0, screenWidth, viewportHeight);
+        //     viewportHeight = screenHeight;
+        //     zoomFactor = screenHeight / WORLD_HEIGHT;
+        // } else {
+        //     let mobileUi = this.scene.get('MobileUIScene');
+        //     mobileUi.cameras.main.setVisible(true);
+        //     let desktopUi = this.scene.get('DesktopUIScene');
+        //     desktopUi.cameras.main.setVisible(false);
+        //     viewportHeight = screenHeight - MOBILE_UI_HEIGHT;
+        //     zoomFactor = viewportHeight / WORLD_HEIGHT;
+        // }
 
-    //     // Apply the zoom factor so that WORLD_HEIGHT fits into the viewport height
-    //     this.cameras.main.setZoom(zoomFactor);
-    // }
+        viewportHeight = screenHeight - MOBILE_UI_HEIGHT;
+        zoomFactor = viewportHeight / WORLD_HEIGHT;
+        // Set the viewport to fill the device width and the calculated height
+        this.cameras.main.setViewport(0, 0, screenWidth, viewportHeight);
+
+        // Apply the zoom factor so that WORLD_HEIGHT fits into the viewport height
+        this.cameras.main.setZoom(zoomFactor);
+    }
 
     create() {
         this.physics.world.setBounds(0, 0, this.worldWidth, WORLD_HEIGHT);
         this.cameras.main.setBounds(0, 0, this.worldWidth, WORLD_HEIGHT);
 
         // Initialize the viewport and zoom
-        // this.resizeCamera();
+        this.resizeCamera();
 
         // Listen for resize events and UI ready event
-        // this.scale.on('resize', this.resizeCamera, this);
+        this.scale.on('resize', this.resizeCamera, this);
 
         // === Left End Column ===
         // Place the left end asset at the center of the first column.

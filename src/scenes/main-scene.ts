@@ -2,7 +2,7 @@
 import { Scene } from "phaser";
 import BackendService, { IBackendService } from "../components/backend-service";
 import { Dialog } from "../components/dialog";
-import { ADVANCE_REQUESTED_EVENT, BALANCE_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, ERROR_EVENT, GAME_DATA, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
+import { ADVANCE_REQUESTED_EVENT, BALANCE_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, ERROR_EVENT, GAME_DATA, HEIGHT, INTERACTED_EVENT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
 import { GAME_ONGOING_STATUS, GAME_FINISHED_STATUS, EMPTY_POSITION } from "../sui/constants/piggybank-constants";
 import { GameModel, InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import MockBackendService from "../components/mock-backend-service";

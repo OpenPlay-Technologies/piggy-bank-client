@@ -68,7 +68,7 @@ export class Main extends Scene {
     resizeCamera() {
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
-        const pixelRatio = window.devicePixelRatio || 1;
+        // const pixelRatio = window.devicePixelRatio || 1;
         
         let viewportHeight = screenHeight - MOBILE_UI_HEIGHT;
         let zoomFactor = viewportHeight / WORLD_HEIGHT;
@@ -79,14 +79,8 @@ export class Main extends Scene {
         // Apply the zoom factor so that WORLD_HEIGHT fits into the viewport height
         this.cameras.main.setZoom(zoomFactor);
         
-        // Adjust the canvas resolution to match device pixel ratio
-        // This doesn't change the display size, just the internal resolution
-        this.scale.canvas.width = screenWidth * pixelRatio;
-        this.scale.canvas.height = viewportHeight * pixelRatio;
-        
-        // Make sure the CSS size remains the same
-        this.scale.canvas.style.width = `${screenWidth}px`;
-        this.scale.canvas.style.height = `${viewportHeight}px`;
+        // Tell Phaser to update its display
+        this.scale.refresh();
     }
 
     create() {

@@ -14,6 +14,11 @@ import {
 import { PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import { formatSuiAmount } from "../utils/helpers";
 
+const buttonHeight = 50;
+const buttonWidth = 170;
+const borderRadius = 10;
+const padding = 20;
+
 export class GameUIScene extends Phaser.Scene {
     // State variables
     private stakeIndex: number = 0;
@@ -48,12 +53,12 @@ export class GameUIScene extends Phaser.Scene {
 
         this.width = width;
         this.height = height;
-        this.startY = height - MOBILE_UI_HEIGHT;
+        this.startY = height * (1 - MOBILE_UI_HEIGHT);
 
         // If the background image exists, update its size and position
         if (this.background) {
             // Set the background to span the full width and bottom half height
-            this.background.setDisplaySize(this.width, MOBILE_UI_HEIGHT);
+            this.background.setDisplaySize(this.width, MOBILE_UI_HEIGHT * height);
             // Position it so that it sits at the bottom of the canvas
             this.background.setPosition(0, this.startY);
         }
@@ -66,13 +71,13 @@ export class GameUIScene extends Phaser.Scene {
             this.minusButton.setPosition((this.width - 100) / 2, this.startY + 100);
         }
         if (this.advanceButton) {
-            this.advanceButton.setPosition(this.width / 2, this.height - 90);
+            this.advanceButton.setPosition((this.width - buttonWidth - padding) / 2, this.height - buttonHeight/2 - padding);
         }
         if (this.cashOutButton) {
-            this.cashOutButton.setPosition(this.width / 2, this.height - 30);
+            this.cashOutButton.setPosition((this.width + buttonWidth + padding) / 2, this.height - buttonHeight/2 - padding);
         }
         if (this.startGameButton) {
-            this.startGameButton.setPosition(this.width / 2, this.height - 90);
+            this.startGameButton.setPosition((this.width - buttonWidth + padding) / 2, this.height - buttonHeight/2 - padding);
         }
         if (this.balanceText) {
             this.balanceText.setPosition(20, this.startY + 20);
@@ -80,6 +85,8 @@ export class GameUIScene extends Phaser.Scene {
         if (this.stakeText) {
             this.stakeText.setPosition(20, this.startY + 40)
         };
+
+        this.cameras.main.setZoom(window.devicePixelRatio);
     }
 
     create(): void {
@@ -258,11 +265,6 @@ export class GameUIScene extends Phaser.Scene {
 
 // A helper function to create a button container with a rounded rectangle background and centered text
 function createButton(scene: Phaser.Scene, x: number, y: number, label: string, callback: Function) {
-    // Button dimensions and styling
-    const buttonWidth = 170;
-    const buttonHeight = 50;
-    const borderRadius = 10;
-
     // Create a container at the desired position
     const container = scene.add.container(x, y);
 
@@ -276,8 +278,6 @@ function createButton(scene: Phaser.Scene, x: number, y: number, label: string, 
     const buttonText = scene.add.text(0, 0, label, {
         fontSize: '20px',
         color: '#fff',
-        fontFamily: 'sans-serif',
-        resolution: window.devicePixelRatio
     }).setOrigin(0.5);
 
     // Add both the graphics and text to the container

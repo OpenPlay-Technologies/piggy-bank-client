@@ -97,33 +97,6 @@ window.addEventListener('message', (event: MessageEvent) => {
     }
 });
 
-// window.addEventListener('resize', () => {
-//     const canvas = document.querySelector('canvas');
-//     const dpi = window.devicePixelRatio || 1;
-//     console.log("dpi", dpi);
-//     if (canvas) {
-//         // Update canvas CSS size
-//         canvas.style.width = `${displayWidth}px`;
-//         canvas.style.height = `${displayHeight}px`;
-
-//         // Center the canvas if needed
-//         canvas.style.marginLeft = `${Math.floor((parentWidth - displayWidth) / 2)}px`;
-//         canvas.style.marginTop = `${Math.floor((parentHeight - displayHeight) / 2)}px`;
-//     }
-// });
-
-
-// Remove this !! This is for testing purposes only
-const initData = {
-    type: INIT_REQUEST,
-    balanceManagerId: import.meta.env.VITE_BALANCE_MANAGER_ID as string,
-    houseId: import.meta.env.VITE_HOUSE_ID as string,
-    playCapId: import.meta.env.VITE_PLAY_CAP_ID as string,
-};
-
-console.log("Sending init data:", initData);
-window.postMessage(initData, '*');
-
 
 interface InitData {
     balanceManagerId: string;
@@ -152,17 +125,8 @@ const setupFullscreenHighDPIScaling = (game: Phaser.Game): (() => void) => {
     // Reference to the canvas element
     const canvas: HTMLCanvasElement = game.canvas;
 
-    // Get the parent element - in your case it's #game-container
-    const parent: HTMLElement = document.getElementById('game-container') as HTMLElement;
-
     // Function to update canvas dimensions to fill the screen
     const updateCanvasSize = (): void => {
-        // Make parent fill the viewport
-        parent.style.width = '100vw';
-        parent.style.height = '100vh';
-        parent.style.margin = '0';
-        parent.style.padding = '0';
-        parent.style.overflow = 'hidden';
 
         // Get the available screen dimensions
         const screenWidth: number = window.innerWidth;
@@ -173,8 +137,6 @@ const setupFullscreenHighDPIScaling = (game: Phaser.Game): (() => void) => {
 
         const scaledWidth = Math.ceil(screenWidth * dpr);
         const scaledHeight = Math.ceil(screenHeight * dpr);
-
-
 
         // Set CSS size to fill the screen
         canvas.style.width = `${screenWidth}px`;
@@ -200,23 +162,6 @@ const setupFullscreenHighDPIScaling = (game: Phaser.Game): (() => void) => {
             // Force the scale manager to recognize the new size
             (game.scale as any).resize(scaledWidth, scaledHeight);
         }
-
-        // // Update all active cameras to match the new size
-        // game.scene.scenes.forEach((scene: Phaser.Scene) => {
-        //     if (scene.cameras && scene.cameras.main) {
-        //         // Update camera bounds to match new screen size
-        //         scene.cameras.main.setSize(screenWidth, screenHeight);
-
-        //         // Apply DPI scaling to maintain sharpness
-        //         if (dpr !== currentDPR) {
-        //             // Apply scale factor based on DPI change
-        //             scene.cameras.main.setZoom(scene.cameras.main.zoom * (dpr / currentDPR));
-        //         }
-        //     }
-        // });
-
-        // Store the current DPR
-        // currentDPR = dpr;
     };
 
     // Apply initial sizing

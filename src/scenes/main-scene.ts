@@ -71,7 +71,6 @@ export class Main extends Scene {
 
         let viewportHeight, zoomFactor;
 
-
         // const portrait = isPortrait(screenWidth, screenHeight);
         // if (!portrait) {
         //     let mobileUi = this.scene.get('MobileUIScene');
@@ -90,7 +89,7 @@ export class Main extends Scene {
         //     zoomFactor = viewportHeight / WORLD_HEIGHT;
         // }
 
-        viewportHeight = height - MOBILE_UI_HEIGHT;
+        viewportHeight = height * (1 - MOBILE_UI_HEIGHT);
         zoomFactor = viewportHeight / WORLD_HEIGHT;
         // Set the viewport to fill the device width and the calculated height
         this.cameras.main.setViewport(0, 0, width, viewportHeight);

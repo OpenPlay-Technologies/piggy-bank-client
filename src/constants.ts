@@ -31,4 +31,4 @@ export const GAME_DATA = 'game-data';
 export const STAKE_DATA = 'stake-data';
 
 // === UI ===
-export const MOBILE_UI_HEIGHT = 250;
+export const MOBILE_UI_HEIGHT = 0.2;

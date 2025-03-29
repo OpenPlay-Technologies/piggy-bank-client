@@ -171,6 +171,11 @@ const setupFullscreenHighDPIScaling = (game: Phaser.Game): (() => void) => {
         // Get current device pixel ratio
         const dpr: number = window.devicePixelRatio || 1;
 
+        const scaledWidth = Math.ceil(screenWidth * dpr);
+        const scaledHeight = Math.ceil(screenHeight * dpr);
+
+
+
         // Set CSS size to fill the screen
         canvas.style.width = `${screenWidth}px`;
         canvas.style.height = `${screenHeight}px`;
@@ -189,26 +194,26 @@ const setupFullscreenHighDPIScaling = (game: Phaser.Game): (() => void) => {
             }
 
             // Update the game's internal size tracking
-            (game.config.width as any) = screenWidth;
-            (game.config.height as any) = screenHeight;
+            (game.config.width as any) = scaledWidth;
+            (game.config.height as any) = scaledHeight;
 
             // Force the scale manager to recognize the new size
-            (game.scale as any).resize(screenWidth, screenHeight);
+            (game.scale as any).resize(scaledWidth, scaledHeight);
         }
 
-        // Update all active cameras to match the new size
-        game.scene.scenes.forEach((scene: Phaser.Scene) => {
-            if (scene.cameras && scene.cameras.main) {
-                // Update camera bounds to match new screen size
-                scene.cameras.main.setSize(screenWidth, screenHeight);
+        // // Update all active cameras to match the new size
+        // game.scene.scenes.forEach((scene: Phaser.Scene) => {
+        //     if (scene.cameras && scene.cameras.main) {
+        //         // Update camera bounds to match new screen size
+        //         scene.cameras.main.setSize(screenWidth, screenHeight);
 
-                // Apply DPI scaling to maintain sharpness
-                if (dpr !== currentDPR) {
-                    // Apply scale factor based on DPI change
-                    scene.cameras.main.setZoom(scene.cameras.main.zoom * (dpr / currentDPR));
-                }
-            }
-        });
+        //         // Apply DPI scaling to maintain sharpness
+        //         if (dpr !== currentDPR) {
+        //             // Apply scale factor based on DPI change
+        //             scene.cameras.main.setZoom(scene.cameras.main.zoom * (dpr / currentDPR));
+        //         }
+        //     }
+        // });
 
         // Store the current DPR
         currentDPR = dpr;

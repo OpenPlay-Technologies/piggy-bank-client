@@ -66,8 +66,8 @@ export class Main extends Scene {
     }
 
     resizeCamera() {
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
+        const width = this.scale.width;
+        const height = this.scale.height;
 
         let viewportHeight, zoomFactor;
 
@@ -90,10 +90,10 @@ export class Main extends Scene {
         //     zoomFactor = viewportHeight / WORLD_HEIGHT;
         // }
 
-        viewportHeight = screenHeight - MOBILE_UI_HEIGHT;
+        viewportHeight = height - MOBILE_UI_HEIGHT;
         zoomFactor = viewportHeight / WORLD_HEIGHT;
         // Set the viewport to fill the device width and the calculated height
-        this.cameras.main.setViewport(0, 0, screenWidth, viewportHeight);
+        this.cameras.main.setViewport(0, 0, width, viewportHeight);
 
         // Apply the zoom factor so that WORLD_HEIGHT fits into the viewport height
         this.cameras.main.setZoom(zoomFactor);

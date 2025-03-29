@@ -275,7 +275,8 @@ function createButton(scene: Phaser.Scene, x: number, y: number, label: string, 
     // Create the text, centered on the button
     const buttonText = scene.add.text(0, 0, label, {
         fontSize: '20px',
-        color: '#fff'
+        color: '#fff',
+        resolution: window.devicePixelRatio
     }).setOrigin(0.5);
 
     // Add both the graphics and text to the container

@@ -74,7 +74,7 @@ window.addEventListener('message', (event: MessageEvent) => {
                 };
                 game = new OpenPlayGame(getGameConfig(), initData);
                 let context = game.canvas.getContext('2d');
-                if (context){
+                if (context) {
                     context.imageSmoothingEnabled = true;
                     context.imageSmoothingQuality = 'high';
                 }
@@ -93,7 +93,16 @@ window.addEventListener('message', (event: MessageEvent) => {
     }
 });
 
+// Remove this !! This is for testing purposes only
+const initData = {
+    type: INIT_REQUEST,
+    balanceManagerId: import.meta.env.VITE_BALANCE_MANAGER_ID as string,
+    houseId: import.meta.env.VITE_HOUSE_ID as string,
+    playCapId: import.meta.env.VITE_PLAY_CAP_ID as string,
+};
 
+console.log("Sending init data:", initData);
+window.postMessage(initData, '*');
 
 
 interface InitData {

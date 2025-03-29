@@ -7,7 +7,7 @@ import { INIT_REQUEST, INIT_RESPONSE, isMessage } from "./openplay-connect/messa
 import { GameUIScene } from "./scenes/game-ui-scene";
 
 const getGameConfig = (): Types.Core.GameConfig => {
-
+    // const dpr = window.devicePixelRatio;
     const config: Types.Core.GameConfig = {
         type: Phaser.AUTO,
         width: WIDTH,
@@ -34,10 +34,10 @@ const getGameConfig = (): Types.Core.GameConfig => {
                 debug: false
             },
         },
-        antialias: true,
-        roundPixels: true,
-        mipmapFilter: "LINEAR_MIPMAP_LINEAR",
-        autoMobilePipeline: true,
+        // antialias: true,
+        // roundPixels: true,
+        // mipmapFilter: "LINEAR_MIPMAP_LINEAR",
+        // autoMobilePipeline: true,
     };
 
     return config;

@@ -16,7 +16,7 @@ const getGameConfig = (): Types.Core.GameConfig => {
         backgroundColor: '#111111',
         scale: {
             mode: Phaser.Scale.RESIZE,
-            autoCenter: Phaser.Scale.CENTER_BOTH
+            autoCenter: Phaser.Scale.CENTER_BOTH,
         },
         scene: [
             Boot,
@@ -36,7 +36,8 @@ const getGameConfig = (): Types.Core.GameConfig => {
         },
         antialias: true,
         roundPixels: true,
-        mipmapFilter: "LINEAR_MIPMAP_LINEAR"
+        mipmapFilter: "LINEAR_MIPMAP_LINEAR",
+        autoMobilePipeline: true,
     };
 
     return config;

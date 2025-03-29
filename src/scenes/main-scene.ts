@@ -68,35 +68,25 @@ export class Main extends Scene {
     resizeCamera() {
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
-
-        let viewportHeight;
-
-
-        // const portrait = isPortrait(screenWidth, screenHeight);
-        // if (!portrait) {
-        //     let mobileUi = this.scene.get('MobileUIScene');
-        //     mobileUi.cameras.main.setVisible(true);
-        //     let desktopUi = this.scene.get('DesktopUIScene');
-        //     desktopUi.cameras.main.setVisible(false);
-
-        //     viewportHeight = screenHeight;
-        //     zoomFactor = screenHeight / WORLD_HEIGHT;
-        // } else {
-        //     let mobileUi = this.scene.get('MobileUIScene');
-        //     mobileUi.cameras.main.setVisible(true);
-        //     let desktopUi = this.scene.get('DesktopUIScene');
-        //     desktopUi.cameras.main.setVisible(false);
-        //     viewportHeight = screenHeight - MOBILE_UI_HEIGHT;
-        //     zoomFactor = viewportHeight / WORLD_HEIGHT;
-        // }
-
-        viewportHeight = screenHeight - MOBILE_UI_HEIGHT;
-        // zoomFactor = viewportHeight / WORLD_HEIGHT;
+        const pixelRatio = window.devicePixelRatio || 1;
+        
+        let viewportHeight = screenHeight - MOBILE_UI_HEIGHT;
+        let zoomFactor = viewportHeight / WORLD_HEIGHT;
+        
         // Set the viewport to fill the device width and the calculated height
         this.cameras.main.setViewport(0, 0, screenWidth, viewportHeight);
-
+        
         // Apply the zoom factor so that WORLD_HEIGHT fits into the viewport height
-        // this.cameras.main.setZoom(zoomFactor);
+        this.cameras.main.setZoom(zoomFactor);
+        
+        // Adjust the canvas resolution to match device pixel ratio
+        // This doesn't change the display size, just the internal resolution
+        this.scale.canvas.width = screenWidth * pixelRatio;
+        this.scale.canvas.height = viewportHeight * pixelRatio;
+        
+        // Make sure the CSS size remains the same
+        this.scale.canvas.style.width = `${screenWidth}px`;
+        this.scale.canvas.style.height = `${viewportHeight}px`;
     }
 
     create() {

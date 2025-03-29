@@ -17,6 +17,7 @@ const getGameConfig = (): Types.Core.GameConfig => {
         scale: {
             mode: Phaser.Scale.RESIZE,
             autoCenter: Phaser.Scale.CENTER_BOTH,
+            autoRound: true,  // Round pixel values to prevent blurring
         },
         scene: [
             Boot,
@@ -34,10 +35,12 @@ const getGameConfig = (): Types.Core.GameConfig => {
                 debug: false
             },
         },
-        // antialias: true,
-        // roundPixels: true,
-        // mipmapFilter: "LINEAR_MIPMAP_LINEAR",
-        // autoMobilePipeline: true,
+        render: {
+            antialias: true,
+            pixelArt: false,  // Set to true only if using pixel art
+            roundPixels: false,  // Can cause its own issues with non-pixel art
+            powerPreference: 'high-performance'
+        }
     };
 
     return config;

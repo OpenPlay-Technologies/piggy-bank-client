@@ -276,6 +276,7 @@ function createButton(scene: Phaser.Scene, x: number, y: number, label: string, 
     const buttonText = scene.add.text(0, 0, label, {
         fontSize: '20px',
         color: '#fff',
+        fontFamily: 'sans-serif',
         resolution: window.devicePixelRatio
     }).setOrigin(0.5);
 

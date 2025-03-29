@@ -86,7 +86,8 @@ export class GameUIScene extends Phaser.Scene {
             this.stakeText.setPosition(20, this.startY + 40)
         };
 
-        this.cameras.main.setZoom(window.devicePixelRatio);
+        // this.cameras.main.setZoom(window.devicePixelRatio || 1);
+        // this.cameras.main.setViewport(0, 0, this.width, this.height);
     }
 
     create(): void {

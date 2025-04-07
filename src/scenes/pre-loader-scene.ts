@@ -6,6 +6,7 @@ import { fetchGame, fetchContext } from '../sui/queries/piggy-bank';
 import { mockFetchBalanceManager, mockFetchContext, mockFetchGame } from '../components/mock-backend-service';
 import { GAME_DATA, BALANCE_MANAGER_DATA, CONTEXT_DATA, BALANCE_DATA } from '../constants';
 import { OpenPlayGame } from '../game';
+import { lightenColor } from '../utils/colors';
 
 export class Preloader extends Scene {
     gameDataPromise: Promise<GameModel | undefined> | undefined;
@@ -70,6 +71,12 @@ export class Preloader extends Scene {
         this.load.image('meat', 'assets/background/meat.png');
         this.load.image('knife', 'assets/props/knife.png');
         this.load.image('piggy-bank-background', 'assets/background/piggy-bank-background.png');
+
+        this.load.svg("plus-icon", "assets/ui/plus.svg");
+        this.load.svg("minus-icon", "assets/ui/minus.svg");
+        this.load.svg("chevron-left-icon", "assets/ui/chevron-left.svg");
+        this.load.svg("chevron-right-icon", "assets/ui/chevron-right.svg");
+
 
 
         // ---------------------------
@@ -183,7 +190,7 @@ export class Preloader extends Scene {
 
     update(): void {
         // Only update the loader sprite if the fade-in is done and the loader exists.
-        if ((this.fadeInDone && this.loaderSprite) || (import .meta.env.VITE_SKIP_LOADER) == "true") {
+        if ((this.fadeInDone && this.loaderSprite) || (import.meta.env.VITE_SKIP_LOADER) == "true") {
             // As soon as both API calls are done and fetchContext hasn't started, initiate fetchContext.
             if (this.api1Done && this.api2Done && !this.fetchContextStarted) {
                 this.fetchContextStarted = true;

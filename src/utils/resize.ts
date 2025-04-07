@@ -1,5 +1,7 @@
 
 
 export function isPortrait(width: number, height: number): boolean {
-    return width < height && width < 600;
+    const normalizedWidth = Math.round(width / window.devicePixelRatio);
+    const normalizedHeight = Math.round(height / window.devicePixelRatio);
+    return normalizedWidth < normalizedHeight && normalizedWidth < 600;
 }

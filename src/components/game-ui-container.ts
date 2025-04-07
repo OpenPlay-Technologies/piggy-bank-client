@@ -14,22 +14,19 @@ import {
 import { PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import { isPortrait } from "../utils/resize";
 
-
 const padding = 20;
 
-export class GameUIScene extends Phaser.Scene {
+export class GameUIContainer extends Phaser.GameObjects.Container {
     // State variables
     private isGameOngoing: boolean = false;
     private isGameLoading: boolean = false;
 
     // UI elements
-    private startGameButton?: ActionButton | undefined;
-    private advanceButton?: ActionButton | undefined;
-    private cashOutButton?: ActionButton | undefined;
+    private startGameButton?: ActionButton;
+    private advanceButton?: ActionButton;
+    private cashOutButton?: ActionButton;
 
     // Dimensions
-    private width: number = 0;
-    private height: number = 0;
     private startY: number = 0;
     private uiFrameWidth: number = 500;
     private stakeSelectorHeight: number = 100;
@@ -41,17 +38,77 @@ export class GameUIScene extends Phaser.Scene {
     difficultySelector: DifficultySelector | undefined;
     buttonHeight: number = 0;
 
-    constructor() {
-        super({ key: 'GameUIScene' });
+    constructor(scene: Phaser.Scene, x: number, y: number) {
+        super(scene, x, y);
+
+        // Create background texture if it doesn't exist
+        if (!this.scene.textures.exists("ui-mobile-bg")) {
+            const bgGraphics = this.scene.add.graphics();
+            bgGraphics.fillStyle(0x222222, 1);
+            bgGraphics.fillRect(0, 0, 800, 600);
+            bgGraphics.generateTexture("ui-mobile-bg", 800, 600);
+            bgGraphics.destroy();
+        }
+        this.background = this.scene.add.image(0, 0, "ui-mobile-bg").setOrigin(0, 0);
+        // Add background to the container
+        this.add(this.background);
+
+        // Create buttons
+        this.advanceButton = new ActionButton(this.scene, 0, 0, {
+            color: 0xd19a19,
+            text: "ADVANCE",
+            onClick: () => this.handleAdvance(),
+        });
+        this.cashOutButton = new ActionButton(this.scene, 0, 0, {
+            color: 0x4b9c5c,
+            text: "CASH OUT",
+            onClick: () => this.handleCashOut(),
+        });
+        this.startGameButton = new ActionButton(this.scene, 0, 0, {
+            color: 0x8e8bc4,
+            text: "START",
+            onClick: () => this.handleStartGame(),
+        });
+
+        // Create stake and difficulty selectors
+        this.stakeSelector = new StakeSelector(this.scene, 0, 0, {
+            mainColor: 0x8e8bc4,
+        });
+        this.difficultySelector = new DifficultySelector(this.scene, 0, 0, {
+            mainColor: 0x8e8bc4,
+        });
+
+        // Add all UI elements to the container
+        this.add([
+            this.advanceButton,
+            this.cashOutButton,
+            this.startGameButton,
+            this.stakeSelector,
+            this.difficultySelector
+        ]);
+
+        // Initial setup.
+        const initialStatus = this.scene.registry.get('status') || "";
+        this.handleStatusUpdate(initialStatus);
+        this.updateActionButtons();
+
+        // Perform initial sizing
+        this.resize();
+
+        // Listen for resize events on the parent scene
+        this.scene.scale.on('resize', this.resize, this);
+
+        // Listen for events from the game scene
+        const gameScene = this.scene.scene.get("Main");
+        gameScene.events.on(STATUS_UPDATED_EVENT, this.handleStatusUpdate, this);
     }
 
     resize() {
         // Get the current width and height from the Scale Manager
-        const width = this.scale.width;
-        const height = this.scale.height;
+        const width = this.scene.scale.width;
+        const height = this.scene.scale.height;
         this.width = width;
         this.height = height;
-
 
         if (isPortrait(width, height)) {
             // Portrait mode
@@ -60,63 +117,48 @@ export class GameUIScene extends Phaser.Scene {
 
             const availableHeight = this.height - this.startY;
             this.stakeSelectorHeight = Math.max(0.2 * availableHeight, 50);
-
-            // this.buttonHeight = availableHeight - 2*padding;
-            this.buttonHeight = availableHeight/2 - 2 * padding;
+            this.buttonHeight = availableHeight / 2 - 2 * padding;
             this.uiFrameWidth = 0.8 * this.width;
 
-
-            // If the background image exists, update its size and position
             if (this.background) {
-                // Set the background to span the full width and bottom half height
                 this.background.setDisplaySize(this.width, MOBILE_UI_HEIGHT * height);
-                // Position it so that it sits at the bottom of the canvas
                 this.background.setPosition(0, this.startY);
             }
 
-            // Place the buttons and text
             if (this.cashOutButton) {
-                this.cashOutButton.setPosition((this.width - this.uiFrameWidth/2) / 2, this.height - this.buttonHeight / 2 - padding);
-                this.cashOutButton.resize((this.uiFrameWidth - padding)/2, this.buttonHeight);
+                this.cashOutButton.setPosition((this.width - this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - padding);
+                this.cashOutButton.resize((this.uiFrameWidth - padding) / 2, this.buttonHeight);
             }
-            if (this.advanceButton){
-                this.advanceButton.setPosition((this.width + this.uiFrameWidth/2) / 2, this.height - this.buttonHeight / 2 - padding);
-                this.advanceButton.resize((this.uiFrameWidth - padding)/2, this.buttonHeight);
+            if (this.advanceButton) {
+                this.advanceButton.setPosition((this.width + this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - padding);
+                this.advanceButton.resize((this.uiFrameWidth - padding) / 2, this.buttonHeight);
             }
             if (this.startGameButton) {
                 this.startGameButton.setPosition(this.width / 2, this.height - this.buttonHeight / 2 - padding);
                 this.startGameButton.resize(this.uiFrameWidth, this.buttonHeight);
             }
             if (this.stakeSelector) {
-                this.stakeSelector.setPosition((this.width - this.uiFrameWidth)/2, this.startY + padding);
+                this.stakeSelector.setPosition((this.width - this.uiFrameWidth) / 2, this.startY + padding);
                 this.stakeSelector.resize(this.uiFrameWidth, this.stakeSelectorHeight);
             }
             if (this.difficultySelector) {
-                this.difficultySelector.setPosition((this.width - this.uiFrameWidth)/2, this.startY + this.stakeSelectorHeight + 2 * padding);
-                this.difficultySelector.resize(this.uiFrameWidth, (this.height - this.buttonHeight - this.difficultySelector.y - 2*padding));
+                this.difficultySelector.setPosition((this.width - this.uiFrameWidth) / 2, this.startY + this.stakeSelectorHeight + 2 * padding);
+                this.difficultySelector.resize(this.uiFrameWidth, (this.height - this.buttonHeight - this.difficultySelector.y - 2 * padding));
             }
-        }
-        else {
+        } else {
             // Desktop mode
             console.log("Desktop mode detected");
             this.startY = height * (1 - DESKTOP_UI_HEIGHT);
 
             const availableHeight = this.height - this.startY;
             this.stakeSelectorHeight = Math.max(0.3 * availableHeight, 50);
-
-            // this.buttonHeight = availableHeight - 2*padding;
             this.buttonHeight = availableHeight - 2 * padding;
 
-
-            // If the background image exists, update its size and position
             if (this.background) {
-                // Set the background to span the full width and bottom half height
                 this.background.setDisplaySize(this.width, DESKTOP_UI_HEIGHT * height);
-                // Position it so that it sits at the bottom of the canvas
                 this.background.setPosition(0, this.startY);
             }
 
-            // Place the buttons and text
             if (this.plusButton) {
                 this.plusButton.setPosition((this.width + 100) / 2, this.startY + 100);
             }
@@ -124,12 +166,12 @@ export class GameUIScene extends Phaser.Scene {
                 this.minusButton.setPosition((this.width - 100) / 2, this.startY + 100);
             }
             if (this.cashOutButton) {
-                this.cashOutButton.setPosition((this.width + padding + this.uiFrameWidth/2) / 2, this.startY + this.buttonHeight / 2 + padding);
-                this.cashOutButton.resize((this.uiFrameWidth - padding)/2, this.buttonHeight - padding);
+                this.cashOutButton.setPosition((this.width + padding + this.uiFrameWidth / 2) / 2, this.startY + this.buttonHeight / 2 + padding);
+                this.cashOutButton.resize((this.uiFrameWidth - padding) / 2, this.buttonHeight - padding);
             }
-            if (this.advanceButton){
-                this.advanceButton.setPosition((this.width + padding + 1.5*this.uiFrameWidth) / 2, this.startY + this.buttonHeight / 2 + padding);
-                this.advanceButton.resize((this.uiFrameWidth - padding)/2, this.buttonHeight - padding);
+            if (this.advanceButton) {
+                this.advanceButton.setPosition((this.width + padding + 1.5 * this.uiFrameWidth) / 2, this.startY + this.buttonHeight / 2 + padding);
+                this.advanceButton.resize((this.uiFrameWidth - padding) / 2, this.buttonHeight - padding);
             }
             if (this.startGameButton) {
                 this.startGameButton.setPosition((this.width + this.uiFrameWidth + padding) / 2, this.startY + this.buttonHeight / 2 + padding);
@@ -144,98 +186,9 @@ export class GameUIScene extends Phaser.Scene {
                 this.difficultySelector.resize(this.uiFrameWidth, this.height - this.startY - this.stakeSelectorHeight - 3 * padding);
             }
         }
-
-
-
-        // TODO: add everything to the container and set the scale of the container
-
-        // this.cameras.main.setZoom(window.devicePixelRatio || 1);
-        // this.cameras.main.setViewport(0, 0, this.width, this.height);
-    }
-
-    create(): void {
-
-        if (!this.textures.exists("ui-mobile-bg")) {
-            const bgGraphics = this.add.graphics();
-            // Fill with your desired color (e.g., 0x333333)
-            bgGraphics.fillStyle(0x222222, 1);
-            // Generate a rectangle texture (dimensions here are arbitrary)
-            bgGraphics.fillRect(0, 0, 800, 600);
-            bgGraphics.generateTexture("ui-mobile-bg", 800, 600);
-            bgGraphics.destroy();
-        }
-        this.background = this.add.image(0, 0, "ui-mobile-bg").setOrigin(0, 0);
-
-        // Add the background image using the generated texture
-        // Set its origin to (0, 0) so positioning is from the top-left corner
-
-        // Create balance text and stake text relative to the background.
-        // They are positioned relative to the background’s top left.
-        // this.balanceText = this.add.text(0, 0, '', {
-        //     fontSize: "20px",
-        //     color: "#fff"
-        // }).setScrollFactor(0);
-        // this.stakeText = this.add.text(0, 0, '', {
-        //     fontSize: "20px",
-        //     color: "#fff"
-        // }).setScrollFactor(0);
-
-        // Buttons
-        this.advanceButton = new ActionButton(this, 0, 0, {
-            color: 0xd19a19,
-            text: "ADVANCE",
-            onClick: () => this.handleAdvance(),
-        });
-        this.cashOutButton = new ActionButton(this, 0, 0, {
-            color: 0x4b9c5c,
-            text: "CASH OUT",
-            onClick: () => this.handleCashOut(),
-        });
-        this.startGameButton = new ActionButton(this, 0, 0, {
-            color: 0x8e8bc4,
-            text: "START",
-            onClick: () => this.handleStartGame(),
-        });
-        this.stakeSelector = new StakeSelector(
-            this,   // current scene
-            0,
-            0,
-            {
-                mainColor: 0x8e8bc4,
-            }
-        );
-        this.difficultySelector = new DifficultySelector(
-            this,   // current scene
-            0,
-            0,
-            {
-                mainColor: 0x8e8bc4,
-            }
-        )
-
-        // Initial setup.
-        // const currentBalance = this.registry.get(BALANCE_DATA) || 0n;
-        // this.handleBalanceChange(currentBalance);
-        // Assume an initial status is stored in the registry.
-        const initialStatus = this.registry.get('status') || "";
-        this.handleStatusUpdate(initialStatus);
-        this.updateActionButtons();
-
-        // Initialize the viewport and zoom
-        this.resize();
-
-        // Listen for resize events
-        this.scale.on('resize', this.resize, this);
-
-        // Listen for events.
-        const gameScene = this.scene.get("Main");
-        gameScene.events.on(STATUS_UPDATED_EVENT, this.handleStatusUpdate, this);
-        // gameScene.events.on(BALANCE_UPDATED_EVENT, this.handleBalanceChange, this);
     }
 
     public reload(status: string): void {
-        // const currentBalance = this.registry.get(BALANCE_DATA) || 0n;
-        // this.handleBalanceChange(currentBalance);
         this.handleStatusUpdate(status);
     }
 
@@ -275,34 +228,22 @@ export class GameUIScene extends Phaser.Scene {
         this.updateActionButtons();
     }
 
-    // private handleBalanceChange(balance: bigint): void {
-    //     this.balanceText?.setText(`Balance: ${formatSuiAmount(balance)}`);
-    // }
-
-    // public setVisualBalance(balance: bigint): void {
-    //     this.balanceText?.setText(`Balance: ${formatSuiAmount(balance)}`);
-    // }
-
     private updateActionButtons(): void {
-
         if (this.isGameLoading) {
             this.startGameButton?.setEnabled(false);
             this.advanceButton?.setEnabled(false);
             this.cashOutButton?.setEnabled(false);
-        }
-        else {
+        } else {
             this.startGameButton?.setEnabled(true);
             this.advanceButton?.setEnabled(true);
             this.cashOutButton?.setEnabled(true);
         }
 
-
         if (this.isGameOngoing) {
             this.advanceButton?.setVisible(true).setInteractive();
             this.cashOutButton?.setVisible(true).setInteractive();
             this.startGameButton?.setVisible(false).disableInteractive();
-        }
-        else {
+        } else {
             this.advanceButton?.setVisible(false).disableInteractive();
             this.cashOutButton?.setVisible(false).disableInteractive();
             this.startGameButton?.setVisible(true).setInteractive();
@@ -310,21 +251,21 @@ export class GameUIScene extends Phaser.Scene {
     }
 
     private handleStartGame(): void {
-        this.events.emit(START_GAME_REQUESTED_EVENT);
+        this.scene.events.emit(START_GAME_REQUESTED_EVENT);
         console.log("Start game requested");
     }
 
     private handleAdvance(): void {
-        const contextData: PiggyBankContextModel | undefined = this.registry.get(CONTEXT_DATA);
+        const contextData: PiggyBankContextModel | undefined = this.scene.registry.get(CONTEXT_DATA);
         if (!contextData) {
             return;
         }
-        this.events.emit(ADVANCE_REQUESTED_EVENT);
+        this.scene.events.emit(ADVANCE_REQUESTED_EVENT);
         console.log("Advance requested");
     }
 
     private handleCashOut(): void {
-        this.events.emit(CASH_OUT_REQUESTED_EVENT);
+        this.scene.events.emit(CASH_OUT_REQUESTED_EVENT);
         console.log("Cash out requested");
     }
 }

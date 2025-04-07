@@ -141,7 +141,6 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
      */
     private updateLayout(): void {
         const width = this.width;
-        const height = this.height;
 
         // Redraw inner filled rectangle
         this.filledRect.clear();

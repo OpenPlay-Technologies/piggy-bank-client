@@ -1,4 +1,3 @@
-import { lightenColor } from "../utils/colors";
 
 export class IconButton extends Phaser.GameObjects.Container {
     private background: Phaser.GameObjects.Graphics;

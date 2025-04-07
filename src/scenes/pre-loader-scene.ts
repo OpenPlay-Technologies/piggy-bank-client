@@ -76,6 +76,7 @@ export class Preloader extends Scene {
         this.load.svg("chevron-left-icon", "assets/ui/chevron-left.svg");
         this.load.svg("chevron-right-icon", "assets/ui/chevron-right.svg");
 
+        this.load.image('title', 'assets/ui/Title2.png');
 
 
         // ---------------------------

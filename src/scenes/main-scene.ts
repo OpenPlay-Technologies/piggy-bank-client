@@ -2,7 +2,7 @@
 import { Scene } from "phaser";
 import BackendService, { IBackendService } from "../components/backend-service";
 import { Dialog } from "../components/dialog";
-import { ADVANCE_REQUESTED_EVENT, BALANCE_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, ERROR_EVENT, GAME_DATA, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
+import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, ERROR_EVENT, GAME_DATA, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
 import { GAME_ONGOING_STATUS, GAME_FINISHED_STATUS, EMPTY_POSITION } from "../sui/constants/piggybank-constants";
 import { GameModel, InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import MockBackendService from "../components/mock-backend-service";
@@ -74,14 +74,14 @@ export class Main extends Scene {
 
         const portrait = isPortrait(width, height);
         if (portrait) {
-            viewportHeight = height * (1 - MOBILE_UI_HEIGHT);
+            viewportHeight = height * (1 - MOBILE_UI_HEIGHT) - BALANCE_BAR_HEIGHT_PX;
         } else {
-            viewportHeight = height * (1 - DESKTOP_UI_HEIGHT);
+            viewportHeight = height * (1 - DESKTOP_UI_HEIGHT) - BALANCE_BAR_HEIGHT_PX;
         }
 
         zoomFactor = viewportHeight / WORLD_HEIGHT;
         // Set the viewport to fill the device width and the calculated height
-        this.cameras.main.setViewport(0, 0, width, viewportHeight);
+        this.cameras.main.setViewport(0, BALANCE_BAR_HEIGHT_PX, width, viewportHeight);
 
         // Apply the zoom factor so that WORLD_HEIGHT fits into the viewport height
         this.cameras.main.setZoom(zoomFactor);

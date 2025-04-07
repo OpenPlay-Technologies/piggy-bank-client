@@ -35,3 +35,4 @@ export const DIFFICULTY_DATA = 'difficulty-data';
 // === UI ===
 export const MOBILE_UI_HEIGHT = 0.4;
 export const DESKTOP_UI_HEIGHT = 0.2;
+export const BALANCE_BAR_HEIGHT_PX = 100;

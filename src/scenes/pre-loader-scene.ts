@@ -6,7 +6,6 @@ import { fetchGame, fetchContext } from '../sui/queries/piggy-bank';
 import { mockFetchBalanceManager, mockFetchContext, mockFetchGame } from '../components/mock-backend-service';
 import { GAME_DATA, BALANCE_MANAGER_DATA, CONTEXT_DATA, BALANCE_DATA } from '../constants';
 import { OpenPlayGame } from '../game';
-import { lightenColor } from '../utils/colors';
 
 export class Preloader extends Scene {
     gameDataPromise: Promise<GameModel | undefined> | undefined;

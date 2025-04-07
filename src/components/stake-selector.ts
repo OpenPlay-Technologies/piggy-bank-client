@@ -176,7 +176,6 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
         this.minusButton.resize(buttonSize, buttonSize);
 
         // --- Update stake display texts positions ---
-        const centerX = width / 2;
         this.betDisplayText.setPosition(this.betLabel.x + this.betLabel.width + this.padding, verticalCenter);
         this.currencyText.setPosition(this.betDisplayText.x + this.betDisplayText.width + 5, verticalCenter);
     }

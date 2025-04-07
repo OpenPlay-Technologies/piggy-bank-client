@@ -1,9 +1,37 @@
-﻿import {MoveObject, Table, Uid, VecSet} from "./shared-models";
+﻿import { MoveObject, Table, Uid, VecSet } from "./shared-models";
 
 export const errorMessages: Record<string, Record<number, string>> = {
     context: {
+        1: "Invalid state transition"
     },
+    /**
+     * // === Errors ===
+const EInvalidSuccessRate: u64 = 1;
+const EInvalidSteps: u64 = 2;
+const EUnsupportedStake: u64 = 3;
+const EInvalidCashOut: u64 = 3;
+const EGameAlreadyOngoing: u64 = 4;
+const EGameNotInProgress: u64 = 5;
+const EUnsupportedAction: u64 = 6;
+const ECannotAdvanceFurther: u64 = 7;
+const EPackageVersionDisabled: u64 = 8;
+const EVersionAlreadyAllowed: u64 = 9;
+const EVersionAlreadyDisabled: u64 = 10;
+const EContextAlreadyExists: u64 = 11;
+     * 
+     */
     game: {
+        1: "Invalid success rate",
+        2: "Invalid steps",
+        3: "Unsupported stake",
+        4: "Invalid cash out",
+        5: "Game already ongoing",
+        6: "Game not in progress",
+        7: "Unsupported action",
+        8: "Cannot advance further",
+        9: "Package version disabled",
+        10: "Version already allowed",
+        11: "Version already disabled",
     }
 };
 

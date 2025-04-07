@@ -50,3 +50,11 @@ export function signAndExecuteTransaction(
         window.parent.postMessage(postMessage, '*');
     });
 }
+
+export function requestCloseGame() {
+    const message: Message = {
+        type: "CLOSE_GAME_REQUEST",
+    };
+
+    window.parent.postMessage(message, '*');
+}

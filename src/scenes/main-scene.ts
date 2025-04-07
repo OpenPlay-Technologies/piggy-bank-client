@@ -2,15 +2,19 @@
 import { Scene } from "phaser";
 import BackendService, { IBackendService } from "../components/backend-service";
 import { Dialog } from "../components/dialog";
-import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, ERROR_EVENT, GAME_DATA, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
+import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_MANAGER_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, ERROR_EVENT, GAME_DATA, GAME_LOADED_EVENT, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
 import { GAME_ONGOING_STATUS, GAME_FINISHED_STATUS, EMPTY_POSITION } from "../sui/constants/piggybank-constants";
 import { GameModel, InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
-import MockBackendService from "../components/mock-backend-service";
+import MockBackendService, { mockFetchBalanceManager, mockFetchContext } from "../components/mock-backend-service";
 import { PiggyState, ActionType } from "../components/enums";
 import addDecoration from "./main-helpers/decorations";
 import setupPlatforms from "./main-helpers/platforms";
 import setupPiggy from "./main-helpers/piggy";
 import { isPortrait } from "../utils/resize";
+import { fetchContext } from "../sui/queries/piggy-bank";
+import { OpenPlayGame } from "../game";
+import { fetchBalanceManager } from "../sui/queries/balance-manager";
+import { getPiggyBankErrorMessage, parseError } from "../utils/error-messages";
 
 
 
@@ -260,7 +264,6 @@ export class Main extends Scene {
             y: midpointY,
             duration: 2500,
             onStart: () => {
-
                 this.pig?.anims.play('walk');
             },
         });
@@ -313,6 +316,8 @@ export class Main extends Scene {
                 }
             }
         }
+
+        this.events.emit(GAME_LOADED_EVENT);
     }
 
     handleInteractedEvent(interact: InteractedWithGameModel) {
@@ -449,8 +454,44 @@ export class Main extends Scene {
     }
 
     handleError(errorMsg: string) {
-        this.dialog?.show("Error", errorMsg, "Reload", () => {
-            this.loadGame();
+        const parsed = parseError(errorMsg);
+        const msg = getPiggyBankErrorMessage(parsed[0], parsed[1]);
+        this.dialog?.show("Error", msg, "Reload", () => {
+            const gameData: GameModel | undefined = this.registry.get(GAME_DATA);
+            const game = this.game as OpenPlayGame;
+
+            if (!gameData || !game.initData) {
+                console.error("Game data or balance manager data not found in the registry");
+                this.scene.stop();
+            }
+
+            let balanceManagerDataPromise;
+            let fetchContextPromise;
+            if (!(import.meta.env.VITE_DUMMY_BACKEND === 'true')) {
+                balanceManagerDataPromise = fetchBalanceManager(game.initData!.balanceManagerId);
+                fetchContextPromise = fetchContext(gameData!.contexts.fields.id.id, game.initData!.balanceManagerId);
+            }
+            else {
+                balanceManagerDataPromise = mockFetchBalanceManager();
+                fetchContextPromise = mockFetchContext();
+            }
+
+            Promise.all([balanceManagerDataPromise, fetchContextPromise])
+                .then(([balanceManagerData, context]) => {
+                    if (balanceManagerData) {
+                        this.registry.set(BALANCE_MANAGER_DATA, balanceManagerData);
+                        this.registry.set(CONTEXT_DATA, context);
+                        this.registry.set(BALANCE_DATA, BigInt(balanceManagerData.balance) ?? BigInt(0));
+                        this.loadGame();
+                        this.dialog?.hide();
+                        this.events.emit(GAME_LOADED_EVENT);
+                    } else {
+                        this.scene.stop();
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error fetching data", error);
+                });
         });
     }
 

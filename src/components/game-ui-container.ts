@@ -7,6 +7,7 @@ import {
     CASH_OUT_REQUESTED_EVENT,
     CONTEXT_DATA,
     DESKTOP_UI_HEIGHT,
+    GAME_LOADED_EVENT,
     MOBILE_UI_HEIGHT,
     START_GAME_REQUESTED_EVENT,
     STATUS_UPDATED_EVENT
@@ -88,9 +89,7 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
         ]);
 
         // Initial setup.
-        const initialStatus = this.scene.registry.get('status') || "";
-        this.handleStatusUpdate(initialStatus);
-        this.updateActionButtons();
+        this.loadSetup();
 
         // Perform initial sizing
         this.resize();
@@ -101,6 +100,13 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
         // Listen for events from the game scene
         const gameScene = this.scene.scene.get("Main");
         gameScene.events.on(STATUS_UPDATED_EVENT, this.handleStatusUpdate, this);
+        gameScene.events.on(GAME_LOADED_EVENT, () => this.loadSetup, this);
+    }
+
+    loadSetup() {
+        const initialStatus = this.scene.registry.get('status') || "";
+        this.handleStatusUpdate(initialStatus);
+        this.updateActionButtons();
     }
 
     resize() {

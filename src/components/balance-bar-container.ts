@@ -1,6 +1,8 @@
-import { BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_UPDATED_EVENT } from "../constants";
+import { BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_UPDATED_EVENT, GAME_LOADED_EVENT } from "../constants";
+import { requestCloseGame } from "../openplay-connect/functions";
 import { lightenColor } from "../utils/colors";
 import { formatSuiAmount, mistToSUI } from "../utils/helpers";
+import { IconButton } from "./icon-button";
 
 interface BalanceBarConfig {
     mainColor?: number;
@@ -10,19 +12,21 @@ interface BalanceBarConfig {
 export class BalanceBarContainer extends Phaser.GameObjects.Container {
 
     background: Phaser.GameObjects.Image;
-    padding: number = 10; // Padding for button spacing
+    padding: number = 10; // Padding for button 
+    closeButtonSize: number = BALANCE_BAR_HEIGHT_PX; // Size of the close button
     title: Phaser.GameObjects.Image;
     balanceLabel: Phaser.GameObjects.Text;
     mainColor: any;
     balanceText: Phaser.GameObjects.Text;
     currencyText: Phaser.GameObjects.Text;
+    closeButton: IconButton;
 
     constructor(scene: Phaser.Scene, x: number, y: number, config: BalanceBarConfig = {}) {
         super(scene, x, y);
 
         this.mainColor = config.mainColor ?? 0x8e8bc4;
 
-    
+
         // Create background texture if it doesn't exist
         if (!this.scene.textures.exists("ui-mobile-bg")) {
             const bgGraphics = this.scene.add.graphics();
@@ -56,8 +60,7 @@ export class BalanceBarContainer extends Phaser.GameObjects.Container {
         });
         this.balanceText.setOrigin(1, 0.5);
         this.add(this.balanceText);
-        const currentBalance = this.scene.registry.get(BALANCE_DATA) || 0n;
-        this.handleBalanceChange(currentBalance);
+        this.loadBalance();
 
         // Currency
         this.currencyText = scene.add.text(0, 0, 'SUI', {
@@ -68,6 +71,18 @@ export class BalanceBarContainer extends Phaser.GameObjects.Container {
         this.currencyText.setOrigin(1, 0.5);
         this.add(this.currencyText);
 
+        // Close button
+        this.closeButton = new IconButton(
+            scene,
+            0, // Will be updated in updateLayout()
+            0,
+            0x222222,
+            'close-icon',
+            () => requestCloseGame(),
+            true
+        );
+        this.closeButton.resize(this.closeButtonSize, this.closeButtonSize);
+        this.closeButton.setDepth(1);
         // Perform initial sizing
         this.resize();
 
@@ -76,6 +91,12 @@ export class BalanceBarContainer extends Phaser.GameObjects.Container {
 
         const gameScene = this.scene.scene.get("Main");
         gameScene.events.on(BALANCE_UPDATED_EVENT, this.handleBalanceChange, this);
+        gameScene.events.on(GAME_LOADED_EVENT, this.loadBalance, this);
+    }
+
+    loadBalance() {
+        const currentBalance = this.scene.registry.get(BALANCE_DATA) || 0n;
+        this.handleBalanceChange(currentBalance);
     }
 
     resize() {
@@ -85,18 +106,22 @@ export class BalanceBarContainer extends Phaser.GameObjects.Container {
         this.width = width;
         this.height = height;
 
-        const centerY = BALANCE_BAR_HEIGHT_PX/2;
+        const centerY = BALANCE_BAR_HEIGHT_PX / 2;
 
         if (this.background) {
             this.background.setDisplaySize(this.width, BALANCE_BAR_HEIGHT_PX);
             this.background.setPosition(0, 0);
         }
 
+        if (this.closeButton) {
+            this.closeButton.setPosition(this.padding + this.closeButtonSize / 2, centerY);
+        }
+
         if (this.title) {
             const scale = (-2 * this.padding + BALANCE_BAR_HEIGHT_PX) / this.title.height;
             this.title.setToTop();
             this.title.setScale(scale);
-            this.title.setPosition(this.padding, this.padding);
+            this.title.setPosition(this.padding * 2 + this.closeButtonSize, this.padding);
         }
 
         if (this.currencyText) {

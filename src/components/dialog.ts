@@ -72,7 +72,6 @@ export class Dialog extends Phaser.GameObjects.Container {
       this.button.setText(buttonText);
     }
     this.button.on('pointerup', () => {
-      this.hide();
       if (callBack) {
         callBack();
       }

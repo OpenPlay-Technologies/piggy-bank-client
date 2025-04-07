@@ -1,5 +1,5 @@
-﻿import {errorMessages as errorMessagesCore} from "../sui/models/openplay-core";
-import {errorMessages as errorMessagesCoinFlip} from "../sui/models/openplay-piggy-bank";
+﻿import { errorMessages as errorMessagesCore } from "../sui/models/openplay-core";
+import { errorMessages as errorMessagesPiggyBank } from "../sui/models/openplay-piggy-bank";
 
 /**
  * A helper function that returns a user-friendly error message
@@ -32,25 +32,27 @@ export function getErrorMessage(
  * @param errorCode - The numerical error code (e.g., 1, 2, 3, 4, 5).
  * @returns A user-friendly error string, or a default if not found.
  */
-export function getCoinFlipErrorMessage(
+export function getPiggyBankErrorMessage(
     moduleName: string,
     errorCode: number
 ): string {
-    // Try to find the error in coin flip module
-    const coinFlipModuleErrors = errorMessagesCoinFlip[moduleName];
-    if (coinFlipModuleErrors) {
-        const message = coinFlipModuleErrors[errorCode];
-        if (!message) {
-            return "Unknown error. Please submit a bug report"
+    if (moduleName && errorCode) {
+        const piggyBankModuleErrors = errorMessagesPiggyBank[moduleName];
+        if (piggyBankModuleErrors) {
+            const message = piggyBankModuleErrors[errorCode];
+            if (!message) {
+                return "Unknown error. Please submit a bug report"
+            }
+            return message;
         }
-        return message;
     }
+
     // Fall back to core errors
     return getErrorMessage(moduleName, errorCode);
 }
 
 
-export function handleError(rawErrorMsg: string, showError: (msg: string) => void) {
+export function parseError(rawErrorMsg: string): [string, number] {
     // Regex to capture the name inside `Identifier("...")`
     const moduleNameRegex = /name: Identifier\("([^"]+)"\)/;
 
@@ -66,9 +68,5 @@ export function handleError(rawErrorMsg: string, showError: (msg: string) => voi
     const errorNumberMatch = rawErrorMsg.match(errorNumberRegex);
     const errorNumber = errorNumberMatch ? parseInt(errorNumberMatch[1], 10) : 0;
 
-    if (!moduleName || !errorNumber) {
-        showError(rawErrorMsg);
-    } else {
-        showError(getErrorMessage(moduleName, errorNumber));
-    }
+    return [moduleName, errorNumber];
 }

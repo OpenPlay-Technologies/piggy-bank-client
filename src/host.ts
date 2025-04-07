@@ -1,5 +1,6 @@
 import { getEnvKeypair } from "./utils/keypair";
 import {
+  CLOSE_GAME_REQUEST,
   INIT_REQUEST,
   INIT_RESPONSE,
   isMessage,
@@ -42,6 +43,9 @@ window.addEventListener("message", (event: MessageEvent) => {
       } else {
         console.error("Init failed:", data.errorMsg);
       }
+      break;
+    case CLOSE_GAME_REQUEST:
+     window.alert("Close game request received");
       break;
     default:
       // Unknown message type; no action.

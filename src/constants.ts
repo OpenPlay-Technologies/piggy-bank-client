@@ -23,6 +23,7 @@ export const STAKE_CHANGED_EVENT = 'stake-changed-event';
 export const STATUS_UPDATED_EVENT = 'status-updated-event';
 export const INIT_DATA_READY_EVENT = 'init-data-ready-event';
 export const DIFFICULTY_CHANGED_EVENT = 'difficulty-changed-event';
+export const GAME_LOADED_EVENT = 'game-loaded-event';
 
 // === Data ===
 export const CONTEXT_DATA = 'context-data';

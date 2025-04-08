@@ -28,7 +28,7 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
     bgPadding: number = 4; // Padding for button spacing
 
     // Constants
-    private readonly buttonHeight: number = 40; // Fixed height for the inner rectangle
+    private readonly buttonHeight: number = 30; // Fixed height for the inner rectangle
 
     /**
      * @param scene - The Scene to which this UI component belongs.

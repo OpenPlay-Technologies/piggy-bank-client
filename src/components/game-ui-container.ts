@@ -14,6 +14,7 @@ import {
 } from "../constants";
 import { PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import { isPortrait } from "../utils/resize";
+import { BalanceContainer } from "./balance-container";
 
 const padding = 10;
 
@@ -38,6 +39,7 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
     stakeSelector: StakeSelector | undefined;
     difficultySelector: DifficultySelector | undefined;
     buttonHeight: number = 0;
+    balanceContainer: BalanceContainer;
 
     constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, x, y);
@@ -78,6 +80,10 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
         this.difficultySelector = new DifficultySelector(this.scene, 0, 0, {
             mainColor: 0x8e8bc4,
         });
+
+        // Balance container
+        this.balanceContainer = new BalanceContainer(this.scene, 0, 0);
+        this.add(this.balanceContainer);
 
         // Add all UI elements to the container
         this.add([
@@ -139,15 +145,15 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
             // console.log("rect size", rect.width, rect.height);
 
             if (this.cashOutButton) {
-                this.cashOutButton.setPosition((this.width - this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - padding);
+                this.cashOutButton.setPosition((this.width - this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - padding - 60);
                 this.cashOutButton.resize((this.uiFrameWidth - padding) / 2, this.buttonHeight);
             }
             if (this.advanceButton) {
-                this.advanceButton.setPosition((this.width + this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - padding);
+                this.advanceButton.setPosition((this.width + this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - padding - 60);
                 this.advanceButton.resize((this.uiFrameWidth - padding) / 2, this.buttonHeight);
             }
             if (this.startGameButton) {
-                this.startGameButton.setPosition(this.width / 2, this.height - this.buttonHeight / 2 - padding);
+                this.startGameButton.setPosition(this.width / 2, this.height - this.buttonHeight / 2 - padding - 60);
                 this.startGameButton.resize(this.uiFrameWidth, this.buttonHeight);
             }
             if (this.stakeSelector) {
@@ -157,6 +163,9 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
             if (this.difficultySelector) {
                 this.difficultySelector.setPosition((this.width - this.uiFrameWidth) / 2, this.startY + this.stakeSelectorHeight + 2 * padding);
                 this.difficultySelector.resize(this.uiFrameWidth, 60);
+            }
+            if (this.balanceContainer) {
+                this.balanceContainer.setPosition(this.width / 2, this.height - this.buttonHeight / 2 - padding);
             }
         } else {
             // Desktop mode

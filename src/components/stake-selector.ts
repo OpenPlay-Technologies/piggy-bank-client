@@ -50,9 +50,9 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
 
         // --- CONFIG / STATE ---
         this.mainColor = config.mainColor ?? 0xffffff;
-        this.cornerRadius = config.cornerRadius ?? 16;
+        this.cornerRadius = config.cornerRadius ?? 8;
         this.lineWidth = config.lineWidth ?? 2;
-        this.padding = defaultWidth * 0.05; // Padding based on width
+        this.padding = 10; // Padding based on width
 
         // --- DRAW OUTER BORDER ---
         this.graphics = scene.add.graphics();
@@ -64,7 +64,7 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
         // --- ADD TEXT LABEL ("BET") ---
         const verticalCenter = defaultHeight / 2;
         this.betLabel = scene.add.text(this.padding, verticalCenter, 'BET', {
-            fontSize: "24px",
+            fontSize: "16px",
             fontFamily: "Arial Black",
             color: "#" + this.mainColor.toString(16),
         });
@@ -99,7 +99,7 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
         const centerX = defaultWidth / 2;
         // Bet amount display text (right-aligned)
         this.betDisplayText = scene.add.text(centerX - 20, verticalCenter, '', {
-            fontSize: "24px",
+            fontSize: "16px",
             fontFamily: "Arial Black",
             color: "#" + lightenColor(this.mainColor, 0.8).toString(16),
         });
@@ -108,7 +108,7 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
 
         // Currency text ("SUI") placed to the right of the bet amount
         this.currencyText = scene.add.text(centerX + 5, verticalCenter, 'SUI', {
-            fontSize: "24px",
+            fontSize: "16px",
             fontFamily: "Arial Black",
             color: "#" + this.mainColor.toString(16),
         });
@@ -160,7 +160,7 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
 
         // --- Update button sizes and positions ---
         // Here we calculate the button size as a fraction of container height.
-        const buttonSize = height * 0.8;
+        const buttonSize = 40;
         const buttonSpacing = 10;
         // Reposition plus button
         this.plusButton.setPosition(

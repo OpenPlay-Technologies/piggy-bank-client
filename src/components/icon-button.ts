@@ -75,7 +75,7 @@ export class IconButton extends Phaser.GameObjects.Container {
      */
     private drawButton(color: number) {
         this.background.clear();
-        const radius = 16; // Adjust the rounded corner radius as needed.
+        const radius = 8; // Adjust the rounded corner radius as needed.
         this.background.fillStyle(color, 1);
         // Draw rectangle centered at (0,0)
         this.background.fillRoundedRect(-this.btnWidth / 2, -this.btnHeight / 2, this.btnWidth, this.btnHeight, radius);

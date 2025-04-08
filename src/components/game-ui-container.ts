@@ -15,7 +15,7 @@ import {
 import { PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import { isPortrait } from "../utils/resize";
 
-const padding = 20;
+const padding = 10;
 
 export class GameUIContainer extends Phaser.GameObjects.Container {
     // State variables
@@ -116,15 +116,14 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
         this.width = width;
         this.height = height;
 
+        this.stakeSelectorHeight = 60;
+        this.buttonHeight = 60;
+        this.uiFrameWidth = 250;
+
         if (isPortrait(width, height)) {
             // Portrait mode
             console.log("Portrait mode detected");
             this.startY = height * (1 - MOBILE_UI_HEIGHT);
-
-            const availableHeight = this.height - this.startY;
-            this.stakeSelectorHeight = Math.max(0.2 * availableHeight, 50);
-            this.buttonHeight = availableHeight / 2 - 2 * padding;
-            this.uiFrameWidth = 0.8 * this.width;
 
             if (this.background) {
                 this.background.setDisplaySize(this.width, MOBILE_UI_HEIGHT * height);
@@ -157,16 +156,12 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
             }
             if (this.difficultySelector) {
                 this.difficultySelector.setPosition((this.width - this.uiFrameWidth) / 2, this.startY + this.stakeSelectorHeight + 2 * padding);
-                this.difficultySelector.resize(this.uiFrameWidth, (this.height - this.buttonHeight - this.difficultySelector.y - 2 * padding));
+                this.difficultySelector.resize(this.uiFrameWidth, 60);
             }
         } else {
             // Desktop mode
             console.log("Desktop mode detected");
             this.startY = height * (1 - DESKTOP_UI_HEIGHT);
-
-            const availableHeight = this.height - this.startY;
-            this.stakeSelectorHeight = Math.max(0.3 * availableHeight, 50);
-            this.buttonHeight = availableHeight - 2 * padding;
 
             if (this.background) {
                 this.background.setDisplaySize(this.width, DESKTOP_UI_HEIGHT * height);

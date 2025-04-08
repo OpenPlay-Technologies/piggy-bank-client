@@ -37,7 +37,7 @@ export default class ActionButton extends Phaser.GameObjects.Container {
             color = 0x7f7fff,
             text = "Button",
             textColor = "#ffffff",
-            fontSize = "24px",
+            fontSize = "16px",
             fontFamily = "Arial Black",
             onClick,
         } = options;
@@ -84,7 +84,7 @@ export default class ActionButton extends Phaser.GameObjects.Container {
         // Define colors for top and bottom halves and the shadow effect.
         const halfW = this.buttonWidth / 2;
         const halfH = this.buttonHeight / 2;
-        const cornerRadius = 16;
+        const cornerRadius = 8;
         const shadowOffsetY = this.buttonHeight * 0.05;
 
         // Shadow

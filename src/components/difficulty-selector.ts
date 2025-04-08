@@ -24,11 +24,11 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
     private difficultyDisplayText: Phaser.GameObjects.Text;
     private leftButton: IconButton;
     private rightButton: IconButton;
-    padding: number;
-    bgPadding: number = 10; // Padding for button spacing
+    padding: number = 10;
+    bgPadding: number = 4; // Padding for button spacing
 
     // Constants
-    private readonly buttonHeight: number = 70; // Fixed height for the inner rectangle
+    private readonly buttonHeight: number = 40; // Fixed height for the inner rectangle
 
     /**
      * @param scene - The Scene to which this UI component belongs.
@@ -44,16 +44,16 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
     ) {
         super(scene, x, y);
         // Set initial default size; these can be changed later via resize()
-        const defaultWidth = 300;
-        const defaultHeight = 150;
+        const defaultWidth = 250;
+        const defaultHeight = 60;
         this.setSize(defaultWidth, defaultHeight);
         scene.add.existing(this);
 
         // --- CONFIG / STATE ---
         this.mainColor = config.mainColor ?? 0xffffff;
-        this.cornerRadius = config.cornerRadius ?? 16;
+        this.cornerRadius = config.cornerRadius ?? 8;
         this.lineWidth = config.lineWidth ?? 2;
-        this.padding = defaultWidth * 0.05;
+        this.padding = 10;
 
         // --- DRAW OUTER STROKE (BORDER) ---
         this.graphics = scene.add.graphics();
@@ -90,7 +90,7 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
 
         // --- ADD DIFFICULTY TEXT ---
         this.difficultyDisplayText = scene.add.text(0, 0, this.difficulties[this.difficultyIndex], {
-            fontSize: "24px",
+            fontSize: "16px",
             fontFamily: "Arial Black",
             color: "#" + lightenColor(this.mainColor, 0.8).toString(16),
         });
@@ -164,7 +164,6 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
      */
     public resize(width: number, height: number): void {
         this.setSize(width, height);
-        this.padding = width * 0.05;
 
         // Redraw outer border
         this.graphics.clear();

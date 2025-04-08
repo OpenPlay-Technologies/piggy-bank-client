@@ -469,7 +469,7 @@ export class Main extends Scene {
     handleError(errorMsg: string) {
         const parsed = parseError(errorMsg);
         const msg = getPiggyBankErrorMessage(parsed[0], parsed[1]);
-        this.dialog?.show("Error", msg, "Reload", this.reload);
+        this.dialog?.show("Error", msg, "Reload", () => this.reload);
     }
 
     reload() {

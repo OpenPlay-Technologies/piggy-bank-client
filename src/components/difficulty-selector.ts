@@ -95,6 +95,7 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
             color: "#" + lightenColor(this.mainColor, 0.8).toString(16),
         });
         this.difficultyDisplayText.setOrigin(0.5, 0.5);
+        this.difficultyDisplayText.setResolution(window.devicePixelRatio); // Set resolution for better text quality
         this.add(this.difficultyDisplayText);
 
         // Initial layout update and state

@@ -69,6 +69,7 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
             color: "#" + this.mainColor.toString(16),
         });
         this.betLabel.setOrigin(0, 0.5);
+        this.betLabel.setResolution(window.devicePixelRatio); // Set resolution for better text quality
         this.add(this.betLabel);
 
         // --- CREATE PLUS and MINUS BUTTONS ---
@@ -104,6 +105,7 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
             color: "#" + lightenColor(this.mainColor, 0.8).toString(16),
         });
         this.betDisplayText.setOrigin(0, 0.5);
+        this.betDisplayText.setResolution(window.devicePixelRatio); // Set resolution for better text quality
         this.add(this.betDisplayText);
 
         // Currency text ("SUI") placed to the right of the bet amount
@@ -113,6 +115,7 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
             color: "#" + this.mainColor.toString(16),
         });
         this.currencyText.setOrigin(0, 0.5);
+        this.currencyText.setResolution(window.devicePixelRatio); // Set resolution for better text quality
         this.add(this.currencyText);
 
         // Initial layout update and stake value update

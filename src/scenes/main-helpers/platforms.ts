@@ -54,6 +54,7 @@ export default function setupPlatforms(scene: Main) {
 
         // Create the text object displaying the bps and center it on the platform.
         const bpsText = scene.add.text(columnCenterX, Y_POS, bpsToMultiplier(bps), textStyle).setOrigin(0.5);
+        bpsText.setResolution(window.devicePixelRatio); // Set the resolution for better clarity on mobile devices.
 
         // Group the road, platform, and text into a container for easier management.
         const columnContainer = scene.add.container(0, 0, [roadBar, platform, bpsText]);

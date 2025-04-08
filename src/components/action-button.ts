@@ -57,6 +57,7 @@ export default class ActionButton extends Phaser.GameObjects.Container {
             align: "center",
         });
         this.label.setOrigin(0.5);
+        this.label.setResolution(window.devicePixelRatio); // Set resolution for better text quality
         this.add(this.label);
 
         // Draw the button background and set container size

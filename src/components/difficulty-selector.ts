@@ -163,14 +163,15 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
      * @param width - New width of the component.
      * @param height - New height of the component.
      */
-    public resize(width: number, height: number): void {
+    public resize(width: number, height: number, stroke: boolean = true): void {
         this.setSize(width, height);
 
-        // Redraw outer border
         this.graphics.clear();
-        this.graphics.lineStyle(this.lineWidth, darkenColor(this.mainColor, 0.6), 2);
-        this.graphics.fillStyle(0x000000, 0);
-        this.graphics.strokeRoundedRect(0, 0, width, height, this.cornerRadius);
+        if (stroke) {
+            this.graphics.lineStyle(this.lineWidth, darkenColor(this.mainColor, 0.6), 2);
+            this.graphics.fillStyle(0x000000, 0);
+            this.graphics.strokeRoundedRect(0, 0, width, height, this.cornerRadius);
+        }
 
         // Update layout for inner elements
         this.updateLayout();

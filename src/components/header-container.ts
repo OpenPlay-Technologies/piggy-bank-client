@@ -49,22 +49,24 @@ export class HeaderContainer extends Phaser.GameObjects.Container {
   }
 
   resize() {
-    const width = this.scene.scale.width;
+    const width = this.scene.scale.width / window.devicePixelRatio;
     const height = BALANCE_BAR_HEIGHT_PX;
+    this.setSize(width, height);
     this.background.setDisplaySize(width, height);
     this.background.setPosition(0, 0);
 
     const centerY = height / 2;
 
+
     // Position the close button on the left.
-    this.closeButton.setPosition(this.padding + this.closeButtonSize / 2, centerY);
+    this.closeButton.setPosition(this.width - this.closeButtonSize/2, centerY);
 
     // Position the title on the right.
     // Setting the origin to (1, 0.5) aligns its right edge to the given x-position.
-    this.title.setOrigin(1, 0.5);
+    this.title.setOrigin(0, 0.5);
     // Scale the title to fit within the header height (accounting for padding).
     const scale = (height - 2 * this.padding) / this.title.height;
     this.title.setScale(scale);
-    this.title.setPosition(width - this.padding, centerY);
+    this.title.setPosition(this.padding, centerY);
   }
 }

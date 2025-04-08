@@ -1,9 +1,9 @@
-import { BalanceBarContainer } from "../components/balance-bar-container";
 import { GameUIContainer } from "../components/game-ui-container";
+import { HeaderContainer } from "../components/header-container";
 
 export class GameUIScene extends Phaser.Scene {
     private gameUIContainer!: GameUIContainer;
-    private balanceBarContainer!: BalanceBarContainer;
+    headerContainer: HeaderContainer | undefined;
 
     constructor() {
         super({ key: "GameUIScene" });
@@ -33,8 +33,8 @@ export class GameUIScene extends Phaser.Scene {
         // 3. Afhankelijk van de beschikbare hoogte en breedte (Gedeeld door de devicePixelRatio) de witruimtes aanpassen
 
 
-        this.balanceBarContainer = new BalanceBarContainer(this, 0, 0);
-        this.add.existing(this.balanceBarContainer);
+        this.headerContainer = new HeaderContainer(this, 0, 0);
+        this.add.existing(this.headerContainer);
         // this.balanceBarContainer.setScale(window.devicePixelRatio);
     }
 }

@@ -16,8 +16,6 @@ import { PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import { isPortrait } from "../utils/resize";
 import { BalanceContainer } from "./balance-container";
 
-const padding = 10;
-
 export class GameUIContainer extends Phaser.GameObjects.Container {
     // State variables
     private isGameOngoing: boolean = false;
@@ -32,6 +30,8 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
     private startY: number = 0;
     private uiFrameWidth: number = 500;
     private stakeSelectorHeight: number = 100;
+    private padding: number = 10;
+    private difficultySelectorHeight: number = 60;
 
     background: any;
     plusButton: Phaser.GameObjects.Container | undefined;
@@ -122,6 +122,15 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
         this.width = width;
         this.height = height;
 
+        if (height < 800){
+            this.padding = 5;
+            this.difficultySelectorHeight = 40;
+        }
+        else {
+            this.padding = 10;
+            this.difficultySelectorHeight = 60;
+        }
+
         this.stakeSelectorHeight = 60;
         this.buttonHeight = 60;
         this.uiFrameWidth = 250;
@@ -145,27 +154,27 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
             // console.log("rect size", rect.width, rect.height);
 
             if (this.cashOutButton) {
-                this.cashOutButton.setPosition((this.width - this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - padding - 60);
-                this.cashOutButton.resize((this.uiFrameWidth - padding) / 2, this.buttonHeight);
+                this.cashOutButton.setPosition((this.width - this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - this.padding - 60);
+                this.cashOutButton.resize((this.uiFrameWidth - this.padding) / 2, this.buttonHeight);
             }
             if (this.advanceButton) {
-                this.advanceButton.setPosition((this.width + this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - padding - 60);
-                this.advanceButton.resize((this.uiFrameWidth - padding) / 2, this.buttonHeight);
+                this.advanceButton.setPosition((this.width + this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - this.padding - 60);
+                this.advanceButton.resize((this.uiFrameWidth - this.padding) / 2, this.buttonHeight);
             }
             if (this.startGameButton) {
-                this.startGameButton.setPosition(this.width / 2, this.height - this.buttonHeight / 2 - padding - 60);
+                this.startGameButton.setPosition(this.width / 2, this.height - this.buttonHeight / 2 - this.padding - 60);
                 this.startGameButton.resize(this.uiFrameWidth, this.buttonHeight);
             }
             if (this.stakeSelector) {
-                this.stakeSelector.setPosition((this.width - this.uiFrameWidth) / 2, this.startY + padding);
+                this.stakeSelector.setPosition((this.width - this.uiFrameWidth) / 2, this.startY + this.padding);
                 this.stakeSelector.resize(this.uiFrameWidth, this.stakeSelectorHeight);
             }
             if (this.difficultySelector) {
-                this.difficultySelector.setPosition((this.width - this.uiFrameWidth) / 2, this.startY + this.stakeSelectorHeight + 2 * padding);
-                this.difficultySelector.resize(this.uiFrameWidth, 60);
+                this.difficultySelector.setPosition((this.width - this.uiFrameWidth) / 2, this.startY + this.stakeSelectorHeight + 2 * this.padding);
+                this.difficultySelector.resize(this.uiFrameWidth, this.difficultySelectorHeight, false);
             }
             if (this.balanceContainer) {
-                this.balanceContainer.setPosition(this.width / 2, this.height - this.buttonHeight / 2 - padding);
+                this.balanceContainer.setPosition(this.width / 2, this.height - this.buttonHeight / 2 - this.padding);
             }
         } else {
             // Desktop mode
@@ -184,24 +193,27 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
                 this.minusButton.setPosition((this.width - 100) / 2, this.startY + 100);
             }
             if (this.cashOutButton) {
-                this.cashOutButton.setPosition((this.width + padding + this.uiFrameWidth / 2) / 2, this.startY + this.buttonHeight / 2 + padding);
-                this.cashOutButton.resize((this.uiFrameWidth - padding) / 2, this.buttonHeight - padding);
+                this.cashOutButton.setPosition((this.width + this.padding + this.uiFrameWidth / 2) / 2, this.startY + this.buttonHeight / 2 + this.padding);
+                this.cashOutButton.resize((this.uiFrameWidth - this.padding) / 2, this.buttonHeight - this.padding);
             }
             if (this.advanceButton) {
-                this.advanceButton.setPosition((this.width + padding + 1.5 * this.uiFrameWidth) / 2, this.startY + this.buttonHeight / 2 + padding);
-                this.advanceButton.resize((this.uiFrameWidth - padding) / 2, this.buttonHeight - padding);
+                this.advanceButton.setPosition((this.width + this.padding + 1.5 * this.uiFrameWidth) / 2, this.startY + this.buttonHeight / 2 + this.padding);
+                this.advanceButton.resize((this.uiFrameWidth - this.padding) / 2, this.buttonHeight - this.padding);
             }
             if (this.startGameButton) {
-                this.startGameButton.setPosition((this.width + this.uiFrameWidth + padding) / 2, this.startY + this.buttonHeight / 2 + padding);
-                this.startGameButton.resize(this.uiFrameWidth, this.buttonHeight - padding);
+                this.startGameButton.setPosition((this.width + this.uiFrameWidth + this.padding) / 2, this.startY + this.buttonHeight / 2 + this.padding);
+                this.startGameButton.resize(this.uiFrameWidth, this.buttonHeight - this.padding);
             }
             if (this.stakeSelector) {
-                this.stakeSelector.setPosition(this.width / 2 - this.uiFrameWidth - padding / 2, this.startY + padding);
+                this.stakeSelector.setPosition(this.width / 2 - this.uiFrameWidth - this.padding / 2, this.startY + this.padding);
                 this.stakeSelector.resize(this.uiFrameWidth, this.stakeSelectorHeight);
             }
+            if (this.balanceContainer){
+                this.balanceContainer.setPosition((this.width + this.uiFrameWidth + this.padding) / 2, this.startY + this.stakeSelectorHeight + 2 * this.padding + (this.difficultySelector?.height ?? 0)/2);
+            }
             if (this.difficultySelector) {
-                this.difficultySelector.setPosition(this.width / 2 - this.uiFrameWidth - padding / 2, this.startY + this.stakeSelectorHeight + 2 * padding);
-                this.difficultySelector.resize(this.uiFrameWidth, this.height - this.startY - this.stakeSelectorHeight - 3 * padding);
+                this.difficultySelector.setPosition(this.width / 2 - this.uiFrameWidth - this.padding / 2, this.startY + this.stakeSelectorHeight + 2 * this.padding);
+                this.difficultySelector.resize(this.uiFrameWidth, this.height - this.startY - this.stakeSelectorHeight - 3 * this.padding);
             }
         }
     }

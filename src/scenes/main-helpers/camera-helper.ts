@@ -16,6 +16,16 @@ export function setupCamera(scene: Main) {
 
     // On pointer down: stop following and store initial pointer position
     scene.input.on('pointerdown', function (pointer: { x: number; y: number; }) {
+        let cam = scene.cameras.main;
+
+        // Check if the pointer is outside the camera's viewport boundaries.
+        // (cam.x, cam.y) is the top-left corner and (cam.width, cam.height) the dimensions.
+        if (pointer.x < cam.x || pointer.x > cam.x + cam.width ||
+            pointer.y < cam.y || pointer.y > cam.y + cam.height) {
+            // If outside, do nothing.
+            return;
+        }
+
         // Stop following so the user can pan manually
         if (scene.pig) {
             scene.cameras.main.stopFollow();

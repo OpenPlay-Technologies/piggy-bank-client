@@ -260,14 +260,14 @@ export const mockFetchBalanceManager = async (): Promise<BalanceManagerModel> =>
 };
 
 export const mockFetchContext = async (): Promise<PiggyBankContextModel | undefined> => {
-    // const mockContext: PiggyBankContextModel = {
-    //     stake: 1e9,
-    //     status: GAME_ONGOING_STATUS,
-    //     win: 0,
-    //     current_position: 1
-    // };
+    const mockContext: PiggyBankContextModel = {
+        stake: 1e9,
+        status: GAME_ONGOING_STATUS,
+        win: BigInt(0),
+        current_position: 1
+    };
 
-    return Promise.resolve(undefined);
+    return Promise.resolve(mockContext);
     // return Promise.resolve(mockContext);
     // return new Promise((resolve) => {
     //     setTimeout(() => {

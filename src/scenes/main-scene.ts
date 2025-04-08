@@ -2,7 +2,7 @@
 import { Scene } from "phaser";
 import BackendService, { IBackendService } from "../components/backend-service";
 import { Dialog } from "../components/dialog";
-import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_MANAGER_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, ERROR_EVENT, GAME_DATA, GAME_LOADED_EVENT, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
+import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_MANAGER_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, ERROR_EVENT, GAME_DATA, GAME_LOADED_EVENT, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, RELOAD_REQUESTED_EVENT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_DATA, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
 import { GAME_ONGOING_STATUS, GAME_FINISHED_STATUS, EMPTY_POSITION } from "../sui/constants/piggybank-constants";
 import { GameModel, InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import MockBackendService, { mockFetchBalanceManager, mockFetchContext } from "../components/mock-backend-service";
@@ -77,19 +77,20 @@ export class Main extends Scene {
     resizeCamera() {
         const width = this.scale.width;
         const height = this.scale.height;
+        const balanceBarNormalized = BALANCE_BAR_HEIGHT_PX * window.devicePixelRatio;
 
         let viewportHeight, zoomFactor;
 
         const portrait = isPortrait(width, height);
         if (portrait) {
-            viewportHeight = height * (1 - MOBILE_UI_HEIGHT) - BALANCE_BAR_HEIGHT_PX;
+            viewportHeight = height * (1 - MOBILE_UI_HEIGHT) - balanceBarNormalized;
         } else {
-            viewportHeight = height * (1 - DESKTOP_UI_HEIGHT) - BALANCE_BAR_HEIGHT_PX;
+            viewportHeight = height * (1 - DESKTOP_UI_HEIGHT) - balanceBarNormalized;
         }
 
         zoomFactor = viewportHeight / WORLD_HEIGHT;
         // Set the viewport to fill the device width and the calculated height
-        this.cameras.main.setViewport(0, BALANCE_BAR_HEIGHT_PX, width, viewportHeight);
+        this.cameras.main.setViewport(0, balanceBarNormalized, width, viewportHeight);
 
         // Apply the zoom factor so that WORLD_HEIGHT fits into the viewport height
         this.cameras.main.setZoom(zoomFactor);
@@ -135,6 +136,7 @@ export class Main extends Scene {
         uiScene.events.on(START_GAME_REQUESTED_EVENT, this.handleStartGameRequested, this);
         uiScene.events.on(ADVANCE_REQUESTED_EVENT, this.handleAdvanceRequested, this);
         uiScene.events.on(CASH_OUT_REQUESTED_EVENT, this.handleCashOutRequested, this);
+        uiScene.events.on(RELOAD_REQUESTED_EVENT, this.reload, this);
 
         // === Load the game ===
         this.loadGame();
@@ -467,43 +469,49 @@ export class Main extends Scene {
     handleError(errorMsg: string) {
         const parsed = parseError(errorMsg);
         const msg = getPiggyBankErrorMessage(parsed[0], parsed[1]);
-        this.dialog?.show("Error", msg, "Reload", () => {
-            const gameData: GameModel | undefined = this.registry.get(GAME_DATA);
-            const game = this.game as OpenPlayGame;
+        this.dialog?.show("Error", msg, "Reload", this.reload);
+    }
 
-            if (!gameData || !game.initData) {
-                console.error("Game data or balance manager data not found in the registry");
-                this.scene.stop();
-            }
+    reload() {
+        console.log("Reloading the game");
+        const gameData: GameModel | undefined = this.registry.get(GAME_DATA);
+        const game = this.game as OpenPlayGame;
 
-            let balanceManagerDataPromise;
-            let fetchContextPromise;
-            if (!(import.meta.env.VITE_DUMMY_BACKEND === 'true')) {
-                balanceManagerDataPromise = fetchBalanceManager(game.initData!.balanceManagerId);
-                fetchContextPromise = fetchContext(gameData!.contexts.fields.id.id, game.initData!.balanceManagerId);
-            }
-            else {
-                balanceManagerDataPromise = mockFetchBalanceManager();
-                fetchContextPromise = mockFetchContext();
-            }
+        if (!gameData || !game.initData) {
+            console.error("Game data or balance manager data not found in the registry");
+            this.scene.stop();
+        }
 
-            Promise.all([balanceManagerDataPromise, fetchContextPromise])
-                .then(([balanceManagerData, context]) => {
-                    if (balanceManagerData) {
-                        this.registry.set(BALANCE_MANAGER_DATA, balanceManagerData);
-                        this.registry.set(CONTEXT_DATA, context);
-                        this.registry.set(BALANCE_DATA, BigInt(balanceManagerData.balance) ?? BigInt(0));
-                        this.loadGame();
-                        this.dialog?.hide();
-                        this.events.emit(GAME_LOADED_EVENT);
-                    } else {
-                        this.scene.stop();
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error fetching data", error);
-                });
-        });
+        let balanceManagerDataPromise;
+        let fetchContextPromise;
+        if (!(import.meta.env.VITE_DUMMY_BACKEND === 'true')) {
+            balanceManagerDataPromise = fetchBalanceManager(game.initData!.balanceManagerId);
+            fetchContextPromise = fetchContext(gameData!.contexts.fields.id.id, game.initData!.balanceManagerId);
+        }
+        else {
+            balanceManagerDataPromise = mockFetchBalanceManager();
+            fetchContextPromise = mockFetchContext();
+        }
+
+        Promise.all([balanceManagerDataPromise, fetchContextPromise])
+            .then(([balanceManagerData, context]) => {
+                if (balanceManagerData) {
+                    this.registry.set(BALANCE_MANAGER_DATA, balanceManagerData);
+                    this.registry.set(CONTEXT_DATA, context);
+                    this.registry.set(BALANCE_DATA, BigInt(balanceManagerData.balance) ?? BigInt(0));
+                    
+                    // Stop all animatinos
+                    this.tweens.killAll();
+
+                    this.loadGame();
+                    this.dialog?.hide();
+                } else {
+                    this.scene.stop();
+                }
+            })
+            .catch((error) => {
+                console.error("Error fetching data", error);
+            });
     }
 
     getPlatformForIndex(index: number): Phaser.GameObjects.Image | undefined {
@@ -522,6 +530,7 @@ export class Main extends Scene {
 
     private setStatus(status: PiggyState) {
         this.status = status;
+        this.registry.set(STATUS_DATA, status);
         this.events.emit(STATUS_UPDATED_EVENT, status);
     }
 

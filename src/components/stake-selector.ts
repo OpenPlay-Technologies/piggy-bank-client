@@ -1,7 +1,9 @@
 import { darkenColor, lightenColor } from "../utils/colors";
 import { IconButton } from "./icon-button";
 import { mistToSUI } from "../utils/helpers";
-import { STAKE_CHANGED_EVENT, STAKE_DATA } from "../constants";
+import { CONTEXT_DATA, GAME_LOADED_EVENT, STAKE_CHANGED_EVENT, STAKE_DATA, STATUS_DATA, STATUS_UPDATED_EVENT } from "../constants";
+import { PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
+import { PiggyState } from "./enums";
 
 interface BetDifficultyConfig {
     mainColor?: number;
@@ -13,7 +15,7 @@ interface BetDifficultyConfig {
 export default class StakeSelector extends Phaser.GameObjects.Container {
     // State variables
     private stakeIndex: number = 0;
-    private allowdStakes: number[] = [1e7, 2e7, 3e7, 5e7, 10e7];
+    private allowdStakes: number[] = [1e7, 2e7, 3e7, 5e7, 10e7, 1e9];
 
     // Configuration and state
     private mainColor: number;
@@ -28,6 +30,7 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
     private betDisplayText: Phaser.GameObjects.Text;
     private currencyText: Phaser.GameObjects.Text;
     padding: number;
+    isGameOngoing: boolean = false;
 
     /**
      * @param scene - The Scene to which this UI component belongs.
@@ -79,9 +82,10 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
             scene,
             0,
             0,
-            this.mainColor,
             'plus-icon',
-            () => this.changeStake(true)
+            () => this.changeStake(true),
+            true,
+            this.mainColor
         );
         this.add(this.plusButton);
 
@@ -90,9 +94,10 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
             scene,
             0,
             0,
-            this.mainColor,
             'minus-icon',
-            () => this.changeStake(false)
+            () => this.changeStake(false),
+            true,
+            this.mainColor
         );
         this.add(this.minusButton);
 
@@ -119,24 +124,80 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
         this.add(this.currencyText);
 
         // Initial layout update and stake value update
+        this.loadSetup();
         this.updateLayout();
         this.handleStakeChange();
+        this.loadStakeIndexFromContext();
 
         this.scene.events.on(STAKE_CHANGED_EVENT, this.handleStakeChange, this);
+        // Listen for events from the game scene
+        const gameScene = this.scene.scene.get("Main");
+        gameScene.events.on(GAME_LOADED_EVENT, this.loadStakeIndexFromContext, this);
+        gameScene.events.on(STATUS_UPDATED_EVENT, this.handleStatusUpdate, this);
+    }
+
+    private handleStatusUpdate(status: string): void {
+        switch (status) {
+            case PiggyState.ADVANCE_STAGE_1:
+            case PiggyState.ADVANCE_STAGE_2:
+            case PiggyState.CASHING_OUT:
+            case PiggyState.DYING:
+            case PiggyState.WINNING:
+            case PiggyState.GAME_ONGOING_IDLE:
+                this.isGameOngoing = true;
+                break;
+            case PiggyState.NO_GAME_IDLE:
+                this.isGameOngoing = false;
+                break;
+            default:
+                break;
+        }
+        this.updateActionButtons();
+    }
+
+    loadSetup() {
+        const initialStatus = this.scene.registry.get(STATUS_DATA) || "";
+        this.handleStatusUpdate(initialStatus);
     }
 
     private handleStakeChange(): void {
         const currentStake = this.getCurrentStake();
         this.scene.registry.set(STAKE_DATA, currentStake);
         this.betDisplayText?.setText(`${mistToSUI(currentStake)}`);
-        if (this.stakeIndex === 0) {
+        this.updateActionButtons();
+    }
+
+    private updateActionButtons(): void {
+        if (this.stakeIndex === 0 || this.isGameOngoing) {
             this.minusButton?.setAlpha(0.5).disableInteractive();
-        } else if (this.stakeIndex === this.allowdStakes.length - 1) {
-            this.plusButton?.setAlpha(0.5).disableInteractive();
-        } else {
+        }
+        else {
             this.minusButton?.setAlpha(1).setInteractive();
+        }
+
+        if (this.stakeIndex === this.allowdStakes.length - 1 || this.isGameOngoing) {
+            this.plusButton?.setAlpha(0.5).disableInteractive();
+        }
+        else {
             this.plusButton?.setAlpha(1).setInteractive();
         }
+    }
+
+    private loadStakeIndexFromContext(): void {
+        console.log("Loading stake index from context...");
+        const context: PiggyBankContextModel | undefined = this.scene.registry.get(CONTEXT_DATA);
+        if (context) {
+            const stakeAmount = context.stake;
+            console.log("Stake amount from context:", stakeAmount);
+            this.stakeIndex = this.allowdStakes.indexOf(stakeAmount);
+            if (this.stakeIndex === -1) {
+                this.stakeIndex = 0; // Default to first stake if not found
+            }
+            console.log("Stake index set to:", this.stakeIndex);
+        } else {
+            this.stakeIndex = 0; // Default to first stake if no context
+        }
+        this.handleStakeChange();
     }
 
     private getCurrentStake(): number {

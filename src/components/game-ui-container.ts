@@ -10,6 +10,7 @@ import {
     GAME_LOADED_EVENT,
     MOBILE_UI_HEIGHT,
     START_GAME_REQUESTED_EVENT,
+    STATUS_DATA,
     STATUS_UPDATED_EVENT
 } from "../constants";
 import { PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
@@ -110,9 +111,8 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
     }
 
     loadSetup() {
-        const initialStatus = this.scene.registry.get('status') || "";
+        const initialStatus = this.scene.registry.get(STATUS_DATA) || "";
         this.handleStatusUpdate(initialStatus);
-        this.updateActionButtons();
     }
 
     resize() {

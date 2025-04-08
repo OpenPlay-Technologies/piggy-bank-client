@@ -71,10 +71,10 @@ export class Preloader extends Scene {
         this.load.image('knife', 'assets/props/knife.png');
         this.load.image('piggy-bank-background', 'assets/background/piggy-bank-background.png');
 
-        this.load.svg("plus-icon", "assets/ui/plus.svg");
-        this.load.svg("minus-icon", "assets/ui/minus.svg");
-        this.load.svg("chevron-left-icon", "assets/ui/chevron-left.svg");
-        this.load.svg("chevron-right-icon", "assets/ui/chevron-right.svg");
+        this.load.image("plus-icon", "assets/ui/white-plus.png");
+        this.load.image("minus-icon", "assets/ui/white-minus.png");
+        this.load.image("chevron-left-icon", "assets/ui/white-chevron-left.png");
+        this.load.image("chevron-right-icon", "assets/ui/white-chevron-right.png");
         this.load.image("close-icon", "assets/ui/white-x.png");
 
         this.load.image('title', 'assets/ui/Title2.png');

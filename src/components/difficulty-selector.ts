@@ -1,6 +1,8 @@
 import { darkenColor, lightenColor } from "../utils/colors";
 import { IconButton } from "./icon-button";
-import { DIFFICULTY_CHANGED_EVENT, DIFFICULTY_DATA } from "../constants";
+import { CONTEXT_DATA, DIFFICULTY_CHANGED_EVENT, DIFFICULTY_DATA, GAME_LOADED_EVENT, STATUS_DATA, STATUS_UPDATED_EVENT } from "../constants";
+import { PiggyState } from "./enums";
+import { PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 
 interface DifficultyConfig {
     mainColor?: number;
@@ -29,6 +31,7 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
 
     // Constants
     private readonly buttonHeight: number = 30; // Fixed height for the inner rectangle
+    isGameOngoing: boolean = false;
 
     /**
      * @param scene - The Scene to which this UI component belongs.
@@ -72,7 +75,6 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
             scene,
             0, // Will be updated in updateLayout()
             0,
-            this.mainColor,
             'chevron-left-icon',
             () => this.changeDifficulty(false)
         );
@@ -82,7 +84,6 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
             scene,
             0, // Will be updated in updateLayout()
             0,
-            this.mainColor,
             'chevron-right-icon',
             () => this.changeDifficulty(true)
         );
@@ -100,10 +101,56 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
 
         // Initial layout update and state
         this.updateLayout();
-        this.handleDifficultyChange();
+        this.loadSetup();
+        this.loadDifficultyFromContext();
 
         // Optionally, listen for external events:
         this.scene.events.on(DIFFICULTY_CHANGED_EVENT, this.handleDifficultyChange, this);
+        // Listen for events from the game scene
+        const gameScene = this.scene.scene.get("Main");
+        gameScene.events.on(GAME_LOADED_EVENT, () => this.loadDifficultyFromContext, this);
+        gameScene.events.on(STATUS_UPDATED_EVENT, this.handleStatusUpdate, this);
+    }
+
+    loadSetup() {
+        const initialStatus = this.scene.registry.get(STATUS_DATA) || "";
+        this.handleStatusUpdate(initialStatus);
+    }
+
+    private loadDifficultyFromContext(): void {
+        console.log("Loading difficulty index from context...");
+        const context: PiggyBankContextModel | undefined = this.scene.registry.get(CONTEXT_DATA);
+        if (context) {
+            const difficulty = "HARD"; // TODO: Replace with actual logic to get difficulty from context
+            this.difficultyIndex = this.difficulties.indexOf(difficulty);
+            if (this.difficultyIndex === -1) {
+                this.difficultyIndex = 0; // Default to first stake if not found
+            }
+            console.log("Difficulty index set to:", this.difficultyIndex);
+        } else {
+            this.difficultyIndex = 0; // Default to first stake if no context
+        }
+        this.handleDifficultyChange();
+    }
+
+    private handleStatusUpdate(status: string): void {
+        switch (status) {
+            case PiggyState.ADVANCE_STAGE_1:
+            case PiggyState.ADVANCE_STAGE_2:
+            case PiggyState.CASHING_OUT:
+            case PiggyState.DYING:
+            case PiggyState.WINNING:
+            case PiggyState.GAME_ONGOING_IDLE:
+                this.isGameOngoing = true;
+                break;
+            case PiggyState.NO_GAME_IDLE:
+                this.isGameOngoing = false;
+                break;
+            default:
+                break;
+        }
+        this.updateActionButtons();
+        this.updateVisualState();
     }
 
     private handleDifficultyChange(): void {
@@ -113,14 +160,22 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
         // Update the displayed text
         this.difficultyDisplayText.setText(currentDifficulty);
 
+        this.updateActionButtons();
+    }
+
+    private updateActionButtons(): void {
         // Disable buttons at boundaries
-        if (this.difficultyIndex === 0) {
-            this.leftButton.setAlpha(0.5).disableInteractive();
-        } else if (this.difficultyIndex === this.difficulties.length - 1) {
-            this.rightButton.setAlpha(0.5).disableInteractive();
+        if (this.difficultyIndex === 0 || this.isGameOngoing) {
+            this.leftButton.setEnabled(false);
+        }
+        else {
+            this.leftButton.setEnabled(true);
+        }
+
+        if ((this.difficultyIndex === this.difficulties.length - 1) || this.isGameOngoing) {
+            this.rightButton.setEnabled(false);
         } else {
-            this.leftButton.setAlpha(1).setInteractive();
-            this.rightButton.setAlpha(1).setInteractive();
+            this.rightButton.setEnabled(true);
         }
     }
 
@@ -175,5 +230,9 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
 
         // Update layout for inner elements
         this.updateLayout();
+    }
+
+    private updateVisualState(): void {
+        this.alpha = this.isGameOngoing ? 0.5 : 1;
     }
 }

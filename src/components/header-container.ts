@@ -1,5 +1,5 @@
 // HeaderContainer.ts
-import { BALANCE_BAR_HEIGHT_PX } from "../constants";
+import { BALANCE_BAR_HEIGHT_PX, RELOAD_REQUESTED_EVENT } from "../constants";
 import { requestCloseGame } from "../openplay-connect/functions";
 import { IconButton } from "./icon-button";
 
@@ -29,7 +29,6 @@ export class HeaderContainer extends Phaser.GameObjects.Container {
       scene,
       0, // Updated in resize()
       0,
-      0x222222,
       'close-icon',
       () => requestCloseGame(),
       true
@@ -39,6 +38,11 @@ export class HeaderContainer extends Phaser.GameObjects.Container {
 
     // Create the title image (will appear on the right).
     this.title = this.scene.add.image(0, 0, "title");
+    this.title.setInteractive({ useHandCursor: true });
+    this.title.on("pointerdown", () => {
+      this.scene.events.emit(RELOAD_REQUESTED_EVENT);
+    });
+
     this.add(this.title);
 
     // Perform initial layout.
@@ -59,7 +63,7 @@ export class HeaderContainer extends Phaser.GameObjects.Container {
 
 
     // Position the close button on the left.
-    this.closeButton.setPosition(this.width - this.closeButtonSize/2, centerY);
+    this.closeButton.setPosition(this.width - this.closeButtonSize / 2, centerY);
 
     // Position the title on the right.
     // Setting the origin to (1, 0.5) aligns its right edge to the given x-position.

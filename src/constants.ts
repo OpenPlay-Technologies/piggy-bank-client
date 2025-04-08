@@ -24,6 +24,7 @@ export const STATUS_UPDATED_EVENT = 'status-updated-event';
 export const INIT_DATA_READY_EVENT = 'init-data-ready-event';
 export const DIFFICULTY_CHANGED_EVENT = 'difficulty-changed-event';
 export const GAME_LOADED_EVENT = 'game-loaded-event';
+export const RELOAD_REQUESTED_EVENT = 'reload-requested-event';
 
 // === Data ===
 export const CONTEXT_DATA = 'context-data';
@@ -32,6 +33,7 @@ export const BALANCE_MANAGER_DATA = 'balance-manager-data';
 export const GAME_DATA = 'game-data';
 export const STAKE_DATA = 'stake-data';
 export const DIFFICULTY_DATA = 'difficulty-data';
+export const STATUS_DATA = 'status-data';
 
 // === UI ===
 export const MOBILE_UI_HEIGHT = 0.4;

@@ -42,6 +42,7 @@ export class BalanceBarContainer extends Phaser.GameObjects.Container {
 
         // Add Piggy Bank title
         this.title = this.scene.add.image(0, 0, "title").setOrigin(0, 0).setDepth(1);
+        this.add(this.title);
 
         // Balance label
         this.balanceLabel = scene.add.text(0, 0, 'BALANCE', {
@@ -83,6 +84,7 @@ export class BalanceBarContainer extends Phaser.GameObjects.Container {
         );
         this.closeButton.resize(this.closeButtonSize, this.closeButtonSize);
         this.closeButton.setDepth(1);
+        this.add(this.closeButton);
         // Perform initial sizing
         this.resize();
 

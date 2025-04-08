@@ -5,6 +5,7 @@ import { Main } from "./scenes/main-scene";
 import { Preloader } from "./scenes/pre-loader-scene";
 import { INIT_REQUEST, INIT_RESPONSE, isMessage } from "./openplay-connect/messages";
 import { GameUIScene } from "./scenes/game-ui-scene";
+// import { ZoomTestScene } from "./scenes/zoom-test";
 
 const getGameConfig = (): Types.Core.GameConfig => {
     // const dpr = window.devicePixelRatio;
@@ -21,7 +22,8 @@ const getGameConfig = (): Types.Core.GameConfig => {
             Boot,
             Preloader,
             Main,
-            GameUIScene
+            GameUIScene,
+            // ZoomTestScene,
         ],
         physics: {
             default: "arcade",

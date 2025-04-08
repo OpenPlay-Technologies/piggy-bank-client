@@ -111,8 +111,8 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
 
     resize() {
         // Get the current width and height from the Scale Manager
-        const width = this.scene.scale.width;
-        const height = this.scene.scale.height;
+        const width = this.scene.scale.width / window.devicePixelRatio;
+        const height = this.scene.scale.height / window.devicePixelRatio;
         this.width = width;
         this.height = height;
 
@@ -130,6 +130,14 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
                 this.background.setDisplaySize(this.width, MOBILE_UI_HEIGHT * height);
                 this.background.setPosition(0, this.startY);
             }
+
+            // const rect = this.scene.add.rectangle(0, this.startY, this.width, MOBILE_UI_HEIGHT * height, 0xff0000);
+            // this.add(rect);
+            // rect.setOrigin(0, 0);
+            // rect.setInteractive();
+            // rect.setDepth(10);
+            // rect.setScale(window.devicePixelRatio);
+            // console.log("rect size", rect.width, rect.height);
 
             if (this.cashOutButton) {
                 this.cashOutButton.setPosition((this.width - this.uiFrameWidth / 2) / 2, this.height - this.buttonHeight / 2 - padding);

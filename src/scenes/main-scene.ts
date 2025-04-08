@@ -15,6 +15,7 @@ import { fetchContext } from "../sui/queries/piggy-bank";
 import { OpenPlayGame } from "../game";
 import { fetchBalanceManager } from "../sui/queries/balance-manager";
 import { getPiggyBankErrorMessage, parseError } from "../utils/error-messages";
+import { resetCamera, setupCamera } from "./main-helpers/camera-helper";
 
 
 
@@ -34,6 +35,9 @@ export class Main extends Scene {
     status: PiggyState = PiggyState.NO_GAME_IDLE;
     queuedAction: ActionType | undefined;
     gameUI: Phaser.Scenes.ScenePlugin | undefined;
+    isDragging: boolean | undefined;
+    dragStartPoint: { x: number; y: number; } = { x: 0, y: 0 };
+    idleTimer: Phaser.Time.TimerEvent | null | undefined;
 
 
     constructor() {
@@ -121,9 +125,7 @@ export class Main extends Scene {
 
         // === Camera ===
         // Follow pig with the camera
-        if (this.pig) {
-            this.cameras.main.startFollow(this.pig, true);
-        }
+        setupCamera(this);
 
         // === Event Listeners ===
         const uiScene = this.scene.get('GameUIScene');
@@ -138,8 +140,15 @@ export class Main extends Scene {
         this.loadGame();
     }
 
+    followPig() {
+        if (this.pig) {
+            this.cameras.main.startFollow(this.pig, true);
+        }
+    }
+
     handleStartGameRequested() {
         if (this.status === PiggyState.NO_GAME_IDLE) {
+            resetCamera(this);
             this.updateVisualBalance((this.getCurrentBalance() || 0n) - BigInt(this.getCurrentStake()));
             this.moveTo(0);
             this.backendService?.handleStartGame();
@@ -148,6 +157,7 @@ export class Main extends Scene {
 
     handleAdvanceRequested() {
         if (this.status === PiggyState.GAME_ONGOING_IDLE) {
+            resetCamera(this);
             this.moveTo(this.currentSpot + 1);
             this.backendService?.handleAdvance();
         }
@@ -158,6 +168,7 @@ export class Main extends Scene {
             this.queuedAction = ActionType.CASH_OUT;
         }
         else if (this.status === PiggyState.GAME_ONGOING_IDLE) {
+            resetCamera(this);
             this.updateVisualBalance((this.getCurrentBalance() || 0n) + this.getPayoutForPosition(this.currentSpot));
             this.setStatus(PiggyState.CASHING_OUT);
             this.pig?.stop();

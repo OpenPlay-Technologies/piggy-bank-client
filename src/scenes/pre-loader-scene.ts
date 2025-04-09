@@ -1,14 +1,16 @@
 import { Scene } from 'phaser';
 import { BalanceManagerModel } from '../sui/models/openplay-core';
-import { GameModel } from '../sui/models/openplay-piggy-bank';
+import { GameModel, PiggyBankContextModel } from '../sui/models/openplay-piggy-bank';
 import { fetchBalanceManager } from '../sui/queries/balance-manager';
-import { fetchGame, fetchContext } from '../sui/queries/piggy-bank';
-import { mockFetchBalanceManager, mockFetchContext, mockFetchGame } from '../components/mock-backend-service';
-import { GAME_DATA, BALANCE_MANAGER_DATA, CONTEXT_DATA, BALANCE_DATA } from '../constants';
+import { fetchContext, fetchGames } from '../sui/queries/piggy-bank';
+import { mockFetchBalanceManager, mockFetchContext, mockFetchGames } from '../components/mock-backend-service';
+import { GAME_DATA, BALANCE_MANAGER_DATA, CONTEXT_DATA, BALANCE_DATA, DIFFICULTY_DATA, GAME_MAP_DATA, CONTEXT_MAP_DATA } from '../constants';
 import { OpenPlayGame } from '../game';
+import { Difficulty } from '../components/enums';
+import { GAME_ONGOING_STATUS } from '../sui/constants/piggybank-constants';
 
 export class Preloader extends Scene {
-    gameDataPromise: Promise<GameModel | undefined> | undefined;
+    gameDataPromise: Promise<Record<Difficulty, GameModel | undefined>> | undefined;
     balanceManagerDataPromise: Promise<BalanceManagerModel | undefined> | undefined;
 
     // Flags to track asynchronous steps.
@@ -29,9 +31,9 @@ export class Preloader extends Scene {
 
     // Ensure we only transition once.
     private transitionStarted: boolean = false;
+    fetchContextPromise: Promise<Record<Difficulty, PiggyBankContextModel | undefined>> | undefined;
 
     // Hold the fetchContext promise so we can wait on it later.
-    private fetchContextPromise?: Promise<any>;
 
     constructor() {
         super('Preloader');
@@ -142,11 +144,11 @@ export class Preloader extends Scene {
         // ---------------------------
         if (!(import.meta.env.VITE_DUMMY_BACKEND === 'true')) {
             console.log("fetching game and balance manager data");
-            this.gameDataPromise = fetchGame(import.meta.env.VITE_GAME_ID);
+            this.gameDataPromise = fetchGames();
             this.balanceManagerDataPromise = fetchBalanceManager(game.initData.balanceManagerId);
         } else {
             console.log("using dummy backend");
-            this.gameDataPromise = mockFetchGame();
+            this.gameDataPromise = mockFetchGames();
             this.balanceManagerDataPromise = mockFetchBalanceManager();
         }
 
@@ -154,7 +156,7 @@ export class Preloader extends Scene {
             ?.then(() => {
                 this.api1Done = true;
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 console.error('Error in fetchGame:', error);
                 this.api1Done = true;
             });
@@ -163,7 +165,7 @@ export class Preloader extends Scene {
             ?.then(() => {
                 this.api2Done = true;
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 console.error('Error in fetchBalanceManager:', error);
                 this.api2Done = true;
             });
@@ -201,20 +203,45 @@ export class Preloader extends Scene {
                         if (!gameData || !balanceManagerData) {
                             throw new Error('Missing data for fetchContext');
                         }
-                        if (!(import.meta.env.VITE_DUMMY_BACKEND === 'true')) {
-                            return fetchContext(gameData.contexts.fields.id.id, balanceManagerData.id.id);
-                        } else {
-                            return mockFetchContext();
-                        }
+
+                        const difficulties = Object.keys(gameData) as Difficulty[];
+
+                        const contextEntriesPromises = difficulties.map(async (difficulty) => {
+                            let context;
+                            if (import.meta.env.VITE_DUMMY_BACKEND === 'true') {
+                                context = await mockFetchContext(difficulty);
+                            } else {
+                                const gameModel = gameData[difficulty];
+                                if (!gameModel) {
+                                    throw new Error(`Missing game data for difficulty ${difficulty}`);
+                                }
+                                context = await fetchContext(gameModel.contexts.fields.id.id, balanceManagerData.id.id);
+                            }
+                            // Return a tuple that will later be used to reconstruct an object.
+                            return [difficulty, context] as const;
+                        });
+
+                        return Promise.all(contextEntriesPromises)
+                            .then(entries => {
+                                // Transform the array of tuples into an object keyed by difficulty.
+                                return entries.reduce((acc, [difficulty, context]) => {
+                                    acc[difficulty] = context;
+                                    return acc;
+                                }, {} as Record<Difficulty, PiggyBankContextModel | undefined>);
+                            });
                     })
-                    .then((context: any) => {
+                    .then((context) => {
                         this.fetchContextDone = true;
                         return context;
                     })
-                    .catch((error: any) => {
+                    .catch((error) => {
                         console.error('Error in fetchContext:', error);
                         this.fetchContextDone = true;
-                        return undefined;
+                        return {
+                            [Difficulty.EASY]: undefined,
+                            [Difficulty.MEDIUM]: undefined,
+                            [Difficulty.HARD]: undefined
+                        }
                     });
             }
 
@@ -260,20 +287,43 @@ export class Preloader extends Scene {
             this.balanceManagerDataPromise,
             this.fetchContextPromise ?? Promise.resolve(undefined)
         ])
-            .then(([gameData, balanceManagerData, context]) => {
+            .then(([gameData, balanceManagerData, contexts]) => {
                 if (!gameData) {
                     throw new Error('Game data not found');
                 }
                 if (!balanceManagerData) {
                     throw new Error('Balance manager data not found');
                 }
-                this.registry.set(GAME_DATA, gameData);
+                if (!contexts){
+                    throw new Error('Contexts data not found');
+                }
+                this.registry.set(CONTEXT_MAP_DATA, contexts);
+                for (const difficulty of Object.keys(contexts)) {
+                    const context: PiggyBankContextModel | undefined = contexts[difficulty as Difficulty];
+                    if (context && context.status == GAME_ONGOING_STATUS) {
+                        console.log("Found existing context for difficulty:", difficulty);
+                        this.registry.set(DIFFICULTY_DATA, difficulty);
+                        this.registry.set(CONTEXT_DATA, context);
+                        break;
+                    }
+                }
+                if (!this.registry.get(DIFFICULTY_DATA)) {
+                    this.registry.set(DIFFICULTY_DATA, Difficulty.EASY);
+                }
+
+                console.log("Game data:", gameData);
+
+                const currentGame = gameData[this.registry.get(DIFFICULTY_DATA) as Difficulty];
+                if (!currentGame) {
+                    throw new Error('Current game data not found');
+                }
+                this.registry.set(GAME_DATA, currentGame);
+                this.registry.set(GAME_MAP_DATA, gameData);
                 this.registry.set(BALANCE_MANAGER_DATA, balanceManagerData);
-                this.registry.set(CONTEXT_DATA, context);
                 this.registry.set(BALANCE_DATA, BigInt(balanceManagerData.balance) ?? BigInt(0));
                 this.scene.start('Main');
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 console.error('Error during transition:', error);
             });
     }

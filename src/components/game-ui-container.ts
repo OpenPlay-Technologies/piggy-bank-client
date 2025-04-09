@@ -34,7 +34,7 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
     private padding: number = 10;
     private difficultySelectorHeight: number = 60;
 
-    background: any;
+    background: Phaser.GameObjects.Image;
     plusButton: Phaser.GameObjects.Container | undefined;
     minusButton: Phaser.GameObjects.Container | undefined;
     stakeSelector: StakeSelector | undefined;
@@ -213,7 +213,8 @@ export class GameUIContainer extends Phaser.GameObjects.Container {
             }
             if (this.difficultySelector) {
                 this.difficultySelector.setPosition(this.width / 2 - this.uiFrameWidth - this.padding / 2, this.startY + this.stakeSelectorHeight + 2 * this.padding);
-                this.difficultySelector.resize(this.uiFrameWidth, this.height - this.startY - this.stakeSelectorHeight - 3 * this.padding);
+                const difficultySelectorHeight = Math.min(this.height - this.startY - this.stakeSelectorHeight - 3 * this.padding, 60);
+                this.difficultySelector.resize(this.uiFrameWidth, difficultySelectorHeight);
             }
         }
     }

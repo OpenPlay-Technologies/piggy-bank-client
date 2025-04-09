@@ -4,38 +4,41 @@ import { bpsToMultiplier } from "../../utils/helpers";
 import { Main } from "../main-scene";
 
 export default function setupPlatforms(scene: Main) {
+    // Clear any previously set up platforms before creating new ones.
+    clearPlatforms(scene);
+
     const gameData: GameModel | undefined = scene.registry.get(GAME_DATA);
-    var currentColumnIndex = 1;
-    scene.safespotColumns = []; // will store containers for each column
+    let currentColumnIndex = 1;
+    // Initialize the array that will store containers for each column.
+    scene.safespotColumns = [];
+
     gameData?.steps_payout_bps.forEach((bps, index) => {
-        // Calculate the center x position for the current column
+        // Calculate the center x position for the current column.
         const columnCenterX = COLUMN_WIDTH * currentColumnIndex + COLUMN_WIDTH / 2;
 
         // Add the road background for the column.
         const roadBar = scene.add.image(columnCenterX, HEIGHT / 2, "TileableRoad_Bar").setOrigin(0.5);
 
-        // Place the platform (the safe spot) at the specified Y position.
-        var platform: Phaser.GameObjects.Image;
-
-        // If this is the final safe spot, apply a golden tint.
+        // Create the platform image at the specified Y position.
+        let platform: Phaser.GameObjects.Image;
         if (index === gameData.steps_payout_bps.length - 1) {
+            // For the final safe spot, use the "FinalPoint" image.
             platform = scene.add.image(columnCenterX, Y_POS, "FinalPoint").setOrigin(0.5, 0.5);
-        }
-        else {
+        } else {
             platform = scene.add.image(columnCenterX, Y_POS, "Point").setOrigin(0.5, 0.5);
         }
 
         const platformIndex = currentColumnIndex - 1;
         platform.on('pointerdown', () => {
-            // If the platform is locked, ignore this click
+            // Ignore click if the platform is locked.
             if (platform.getData('clickLock')) {
                 return;
             }
-            // Lock the platform for a short time
+            // Lock the platform briefly to prevent rapid multiple clicks.
             platform.setData('clickLock', true);
-            scene.scene.scene.events.emit(PLATFORM_CLICKED_EVENT, platformIndex); // 1 offset for the left end column
+            scene.scene.scene.events.emit(PLATFORM_CLICKED_EVENT, platformIndex);
 
-            // Unlock after a brief delay (e.g., 50ms)
+            // Unlock after a short delay (50ms).
             scene.time.delayedCall(50, () => {
                 platform.setData('clickLock', false);
             });
@@ -43,7 +46,8 @@ export default function setupPlatforms(scene: Main) {
         platform.setInteractive();
         platform.setName("Point");
         platform.setDepth(10);
-        // Create a text style with white text, a black stroke, and a nice font.
+
+        // Define text style.
         const textStyle = {
             fontFamily: 'Impact, sans-serif',
             fontSize: '42px',
@@ -52,14 +56,26 @@ export default function setupPlatforms(scene: Main) {
             strokeThickness: 6,
         };
 
-        // Create the text object displaying the bps and center it on the platform.
+        // Create and center the text displaying the bps multiplier.
         const bpsText = scene.add.text(columnCenterX, Y_POS, bpsToMultiplier(bps), textStyle).setOrigin(0.5);
-        bpsText.setResolution(window.devicePixelRatio); // Set the resolution for better clarity on mobile devices.
+        bpsText.setResolution(window.devicePixelRatio);
 
         // Group the road, platform, and text into a container for easier management.
         const columnContainer = scene.add.container(0, 0, [roadBar, platform, bpsText]);
-        scene.safespotColumns?.push(columnContainer);
+        scene.safespotColumns!.push(columnContainer);
 
         currentColumnIndex++;
     });
+}
+
+export function clearPlatforms(scene: Main) {
+    // Check if there are any previously set up platform columns.
+    if (scene.safespotColumns && scene.safespotColumns.length > 0) {
+        scene.safespotColumns.forEach((container: Phaser.GameObjects.Container) => {
+            // Destroy each container and all its children.
+            container.destroy(true);
+        });
+        // Reset the safespotColumns array.
+        scene.safespotColumns = [];
+    }
 }

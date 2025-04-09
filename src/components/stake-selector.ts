@@ -4,6 +4,7 @@ import { mistToSUI } from "../utils/helpers";
 import { CONTEXT_DATA, GAME_LOADED_EVENT, STAKE_CHANGED_EVENT, STAKE_DATA, STATUS_DATA, STATUS_UPDATED_EVENT } from "../constants";
 import { PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import { PiggyState } from "./enums";
+import { GAME_ONGOING_STATUS } from "../sui/constants/piggybank-constants";
 
 interface BetDifficultyConfig {
     mainColor?: number;
@@ -162,6 +163,7 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
 
     private handleStakeChange(): void {
         const currentStake = this.getCurrentStake();
+        console.log("handleStakeChange called, currentStake:", currentStake);
         this.scene.registry.set(STAKE_DATA, currentStake);
         this.betDisplayText?.setText(`${mistToSUI(currentStake)}`);
         this.updateActionButtons();
@@ -186,16 +188,13 @@ export default class StakeSelector extends Phaser.GameObjects.Container {
     private loadStakeIndexFromContext(): void {
         console.log("Loading stake index from context...");
         const context: PiggyBankContextModel | undefined = this.scene.registry.get(CONTEXT_DATA);
-        if (context) {
-            const stakeAmount = context.stake;
-            console.log("Stake amount from context:", stakeAmount);
+        if (context && context.status == GAME_ONGOING_STATUS) {
+            const stakeAmount = Number(context.stake);
             this.stakeIndex = this.allowdStakes.indexOf(stakeAmount);
             if (this.stakeIndex === -1) {
                 this.stakeIndex = 0; // Default to first stake if not found
             }
             console.log("Stake index set to:", this.stakeIndex);
-        } else {
-            this.stakeIndex = 0; // Default to first stake if no context
         }
         this.handleStakeChange();
     }

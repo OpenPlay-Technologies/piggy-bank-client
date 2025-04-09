@@ -3,8 +3,9 @@ import { ADVANCE_ACTION, CASH_OUT_ACTION, INTERACT_EVENT_TYPE, INTERACT_FUNCTION
 
 import { signAndExecuteTransaction } from "../openplay-connect/functions";
 import { InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
-import { BALANCE_DATA, CONTEXT_DATA, STAKE_DATA } from "../constants";
+import { BALANCE_DATA, CONTEXT_DATA, ERROR_EVENT, INTERACTED_EVENT, STAKE_DATA } from "../constants";
 import { OpenPlayGame } from "../game";
+import { getCurrentGameData } from "../utils/registry";
 
 export interface IBackendService {
     handleAdvance(): Promise<void>;
@@ -29,8 +30,13 @@ export default class BackendService implements IBackendService {
             throw new Error('Game not initialized');
         }
 
+        const gameData = getCurrentGameData(this.scene.registry);
+        if (!gameData) {
+            throw new Error('Game data not found');
+        }
+
         try {
-            const gameId = import.meta.env.VITE_GAME_ID;
+            const gameId = gameData.id.id;
             const registryId = import.meta.env.VITE_REGISTRY_ID;
             const balanceManagerId = game.initData.balanceManagerId;
             const houseId = game.initData.houseId;
@@ -77,8 +83,13 @@ export default class BackendService implements IBackendService {
         if (!game.initData) {
             throw new Error('Game not initialized');
         }
+        const gameData = getCurrentGameData(this.scene.registry);
+        if (!gameData) {
+            throw new Error('Game data not found');
+        }
+
         try {
-            const gameId = import.meta.env.VITE_GAME_ID;
+            const gameId = gameData.id.id;
             const registryId = import.meta.env.VITE_REGISTRY_ID;
             const balanceManagerId = game.initData.balanceManagerId;
             const houseId = game.initData.houseId;
@@ -107,15 +118,15 @@ export default class BackendService implements IBackendService {
 
             if (interactEvent) {
                 const parsedEvent = parseInteractedWithGameModel(interactEvent.parsedJson) as InteractedWithGameModel;
-                this.scene.events.emit('interacted-event', parsedEvent);
+                this.scene.events.emit(INTERACTED_EVENT, parsedEvent);
             }
             else {
-                this.scene.events.emit('error-event', 'No interact event found');
+                this.scene.events.emit(ERROR_EVENT, 'No interact event found');
             }
         }
         catch (error) {
             console.error(error);
-            this.scene.events.emit('error-event', error instanceof Error ? error.message : "An unknown error occurred");
+            this.scene.events.emit(ERROR_EVENT, error instanceof Error ? error.message : "An unknown error occurred");
         }
     }
 
@@ -127,9 +138,13 @@ export default class BackendService implements IBackendService {
         if (!game.initData) {
             throw new Error('Game not initialized');
         }
+        const gameData = getCurrentGameData(this.scene.registry);
+        if (!gameData) {
+            throw new Error('Game data not found');
+        }
 
         try {
-            const gameId = import.meta.env.VITE_GAME_ID;
+            const gameId = gameData.id.id;
             const registryId = import.meta.env.VITE_REGISTRY_ID;
             const balanceManagerId = game.initData.balanceManagerId;
             const houseId = game.initData.houseId;
@@ -158,12 +173,12 @@ export default class BackendService implements IBackendService {
 
             if (interactEvent) {
                 const parsedEvent = parseInteractedWithGameModel(interactEvent.parsedJson) as InteractedWithGameModel;
-                this.scene.events.emit('interacted-event', parsedEvent);
+                this.scene.events.emit(INTERACTED_EVENT, parsedEvent);
             }
         }
         catch (error) {
             console.error(error);
-            this.scene.events.emit('error-event', error instanceof Error ? error.message : "An unknown error occurred");
+            this.scene.events.emit(ERROR_EVENT, error instanceof Error ? error.message : "An unknown error occurred");
         }
     }
 
@@ -180,7 +195,7 @@ export default class BackendService implements IBackendService {
     }
 }
 
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseInteractedWithGameModel(raw: any): InteractedWithGameModel {
     return {
         old_balance: BigInt(raw.old_balance),

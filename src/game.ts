@@ -47,7 +47,7 @@ const getGameConfig = (): Types.Core.GameConfig => {
 }
 
 // Create the game instance
-var game: Phaser.Game | null = null;
+let game: Phaser.Game | null = null;
 
 // Listen for the init message
 window.addEventListener('message', (event: MessageEvent) => {
@@ -78,7 +78,7 @@ window.addEventListener('message', (event: MessageEvent) => {
                 };
                 game = new OpenPlayGame(getGameConfig(), initData);
                 setupFullscreenHighDPIScaling(game);
-                let context = game.canvas.getContext('2d');
+                const context = game.canvas.getContext('2d');
                 if (context) {
                     context.imageSmoothingEnabled = true;
                     context.imageSmoothingQuality = 'high';
@@ -154,15 +154,15 @@ const setupFullscreenHighDPIScaling = (game: Phaser.Game): (() => void) => {
         if (game.scale) {
             // Force the game renderer to resize
             if (game.renderer) {
-                (game.renderer as any).resize(canvas.width, canvas.height);
+                (game.renderer).resize(canvas.width, canvas.height);
             }
 
-            // Update the game's internal size tracking
-            (game.config.width as any) = scaledWidth;
-            (game.config.height as any) = scaledHeight;
+            // // Update the game's internal size tracking
+            // (game.config.width) = scaledWidth;
+            // (game.config.height) = scaledHeight;
 
             // Force the scale manager to recognize the new size
-            (game.scale as any).resize(scaledWidth, scaledHeight);
+            (game.scale).resize(scaledWidth, scaledHeight);
         }
     };
 

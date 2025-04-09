@@ -13,3 +13,9 @@ export enum ActionType {
     ADVANCE = "ADVANCE",
     CASH_OUT = "CASH_OUT"
 }
+
+export enum Difficulty {
+    EASY = "EASY",
+    MEDIUM = "MEDIUM",
+    HARD = "HARD"
+}

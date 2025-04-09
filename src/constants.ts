@@ -27,10 +27,12 @@ export const GAME_LOADED_EVENT = 'game-loaded-event';
 export const RELOAD_REQUESTED_EVENT = 'reload-requested-event';
 
 // === Data ===
-export const CONTEXT_DATA = 'context-data';
+export const CONTEXT_DATA = 'context-data'; // Current working context
+export const CONTEXT_MAP_DATA = 'context-map-data'; // Per difficulty
 export const BALANCE_DATA = 'balance-data';
 export const BALANCE_MANAGER_DATA = 'balance-manager-data';
-export const GAME_DATA = 'game-data';
+export const GAME_DATA = 'game-data'; // Current game
+export const GAME_MAP_DATA = 'game-map-data'; // Per difficulty
 export const STAKE_DATA = 'stake-data';
 export const DIFFICULTY_DATA = 'difficulty-data';
 export const STATUS_DATA = 'status-data';

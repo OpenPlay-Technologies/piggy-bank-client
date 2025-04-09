@@ -3,6 +3,7 @@ import { IconButton } from "./icon-button";
 import { CONTEXT_DATA, DIFFICULTY_CHANGED_EVENT, DIFFICULTY_DATA, GAME_LOADED_EVENT, STATUS_DATA, STATUS_UPDATED_EVENT } from "../constants";
 import { PiggyState } from "./enums";
 import { PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
+import { getCurrentDifficulty } from "../utils/registry";
 
 interface DifficultyConfig {
     mainColor?: number;
@@ -104,8 +105,6 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
         this.loadSetup();
         this.loadDifficultyFromContext();
 
-        // Optionally, listen for external events:
-        this.scene.events.on(DIFFICULTY_CHANGED_EVENT, this.handleDifficultyChange, this);
         // Listen for events from the game scene
         const gameScene = this.scene.scene.get("Main");
         gameScene.events.on(GAME_LOADED_EVENT, () => this.loadDifficultyFromContext, this);
@@ -121,7 +120,10 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
         console.log("Loading difficulty index from context...");
         const context: PiggyBankContextModel | undefined = this.scene.registry.get(CONTEXT_DATA);
         if (context) {
-            const difficulty = "HARD"; // TODO: Replace with actual logic to get difficulty from context
+            const difficulty = getCurrentDifficulty(this.scene.registry);
+            if (!difficulty) {
+                throw new Error("Difficulty not found in context data.");
+            }
             this.difficultyIndex = this.difficulties.indexOf(difficulty);
             if (this.difficultyIndex === -1) {
                 this.difficultyIndex = 0; // Default to first stake if not found
@@ -154,11 +156,12 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
     }
 
     private handleDifficultyChange(): void {
-        const currentDifficulty = this.getCurrentDifficulty();
+        const currentDifficulty = this.getSetDifficulty();
         // Update registry (if using registry to store difficulty state)
         this.scene.registry.set(DIFFICULTY_DATA, currentDifficulty);
         // Update the displayed text
         this.difficultyDisplayText.setText(currentDifficulty);
+        this.scene.events.emit(DIFFICULTY_CHANGED_EVENT);
 
         this.updateActionButtons();
     }
@@ -179,7 +182,7 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
         }
     }
 
-    private getCurrentDifficulty(): string {
+    private getSetDifficulty(): string {
         return this.difficulties[this.difficultyIndex];
     }
 
@@ -188,8 +191,7 @@ export default class DifficultySelector extends Phaser.GameObjects.Container {
             ? Math.min(this.difficultyIndex + 1, this.difficulties.length - 1)
             : Math.max(this.difficultyIndex - 1, 0);
         // Update the difficulty state and UI
-        this.scene.registry.set(DIFFICULTY_DATA, this.getCurrentDifficulty());
-        this.scene.events.emit(DIFFICULTY_CHANGED_EVENT);
+        this.handleDifficultyChange();
     }
 
     /**

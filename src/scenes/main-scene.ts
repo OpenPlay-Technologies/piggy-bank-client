@@ -2,13 +2,13 @@
 import { Scene } from "phaser";
 import BackendService, { IBackendService } from "../components/backend-service";
 import { Dialog } from "../components/dialog";
-import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_MANAGER_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, ERROR_EVENT, GAME_DATA, GAME_LOADED_EVENT, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, RELOAD_REQUESTED_EVENT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_DATA, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
+import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_MANAGER_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, DIFFICULTY_CHANGED_EVENT, DIFFICULTY_DATA, ERROR_EVENT, GAME_DATA, GAME_LOADED_EVENT, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, RELOAD_REQUESTED_EVENT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_DATA, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
 import { GAME_ONGOING_STATUS, GAME_FINISHED_STATUS, EMPTY_POSITION } from "../sui/constants/piggybank-constants";
 import { GameModel, InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import MockBackendService, { mockFetchBalanceManager, mockFetchContext } from "../components/mock-backend-service";
-import { PiggyState, ActionType } from "../components/enums";
+import { PiggyState, ActionType, Difficulty } from "../components/enums";
 import addDecoration from "./main-helpers/decorations";
-import setupPlatforms from "./main-helpers/platforms";
+import setupPlatforms, { clearPlatforms } from "./main-helpers/platforms";
 import setupPiggy from "./main-helpers/piggy";
 import { isPortrait } from "../utils/resize";
 import { fetchContext } from "../sui/queries/piggy-bank";
@@ -16,6 +16,7 @@ import { OpenPlayGame } from "../game";
 import { fetchBalanceManager } from "../sui/queries/balance-manager";
 import { getPiggyBankErrorMessage, parseError } from "../utils/error-messages";
 import { resetCamera, setupCamera } from "./main-helpers/camera-helper";
+import { getContextForDifficulty, getContextMap, getCurrentDifficulty, getGameDataForDifficulty } from "../utils/registry";
 
 
 
@@ -47,20 +48,8 @@ export class Main extends Scene {
     }
 
     init() {
-        // Load the context
-        const contextData: PiggyBankContextModel | undefined = this.registry.get(CONTEXT_DATA);
-        if (contextData && contextData.status === GAME_ONGOING_STATUS) {
-            console.log("Game resumed", contextData);
-            this.currentSpot = contextData.current_position;
-            this.status = PiggyState.GAME_ONGOING_IDLE;
-        }
-        // Define width of the world based on the number of safe spots
-        const gameData: GameModel | undefined = this.registry.get(GAME_DATA);
-        if (!gameData) {
-            console.error("Game data not found in the registry");
-            return;
-        }
-        this.worldWidth = COLUMN_WIDTH * (gameData.steps_payout_bps.length + 1);
+        this.loadContext();
+        this.setWorldWidth();
 
         // Initialize the backend service, passing this scene to allow event communication
         if (!(import.meta.env.VITE_DUMMY_BACKEND === 'true')) {
@@ -74,12 +63,33 @@ export class Main extends Scene {
         this.scene.launch('GameUIScene');
     }
 
+    private loadContext() {
+        // Load the context
+        const contextData: PiggyBankContextModel | undefined = this.registry.get(CONTEXT_DATA);
+        if (contextData && contextData.status === GAME_ONGOING_STATUS) {
+            console.log("Game resumed", contextData);
+            this.currentSpot = contextData.current_position;
+            this.status = PiggyState.GAME_ONGOING_IDLE;
+        }
+    }
+
+    private setWorldWidth() {
+        // Define width of the world based on the number of safe spots
+        const gameData: GameModel | undefined = this.registry.get(GAME_DATA);
+        if (!gameData) {
+            console.error("Game data not found in the registry");
+            return;
+        }
+        this.worldWidth = COLUMN_WIDTH * (gameData.steps_payout_bps.length + 1);
+    }
+
+
     resizeCamera() {
         const width = this.scale.width;
         const height = this.scale.height;
         const balanceBarNormalized = BALANCE_BAR_HEIGHT_PX * window.devicePixelRatio;
 
-        let viewportHeight, zoomFactor;
+        let viewportHeight;
 
         const portrait = isPortrait(width, height);
         if (portrait) {
@@ -88,7 +98,7 @@ export class Main extends Scene {
             viewportHeight = height * (1 - DESKTOP_UI_HEIGHT) - balanceBarNormalized;
         }
 
-        zoomFactor = viewportHeight / WORLD_HEIGHT;
+        const zoomFactor = viewportHeight / WORLD_HEIGHT;
         // Set the viewport to fill the device width and the calculated height
         this.cameras.main.setViewport(0, balanceBarNormalized, width, viewportHeight);
 
@@ -137,8 +147,31 @@ export class Main extends Scene {
         uiScene.events.on(ADVANCE_REQUESTED_EVENT, this.handleAdvanceRequested, this);
         uiScene.events.on(CASH_OUT_REQUESTED_EVENT, this.handleCashOutRequested, this);
         uiScene.events.on(RELOAD_REQUESTED_EVENT, this.reload, this);
+        uiScene.events.on(DIFFICULTY_CHANGED_EVENT, this.handleDifficultyChanged, this);
 
         // === Load the game ===
+        this.loadGame();
+    }
+
+    private handleDifficultyChanged() {
+        const difficulty: Difficulty = this.registry.get(DIFFICULTY_DATA);
+        if (difficulty) {
+            console.log("Difficulty changed", difficulty);
+        }
+        // Load game
+        const gameData = getGameDataForDifficulty(this.registry, difficulty);
+        if (!gameData) {
+            console.error("Game data not found for the selected difficulty");
+            return;
+        }
+        this.registry.set(GAME_DATA, gameData);
+        // Load context
+        const context = getContextForDifficulty(this.registry, difficulty);
+        this.registry.set(CONTEXT_DATA, context);
+        // Rebuild the scene
+        clearPlatforms(this);
+        setupPlatforms(this);
+        // Load the game
         this.loadGame();
     }
 
@@ -283,7 +316,7 @@ export class Main extends Scene {
     }
 
     loadGame() {
-        var status = PiggyState.NO_GAME_IDLE;
+        let status = PiggyState.NO_GAME_IDLE;
         this.currentSpot = EMPTY_POSITION;
         this.dialog?.hide();
 
@@ -294,8 +327,6 @@ export class Main extends Scene {
             status = PiggyState.GAME_ONGOING_IDLE;
         }
         this.setStatus(status);
-
-        // this.gameUI?.reload(this.status);
 
         // === Reset state ===
         if (this.walkTwig) {
@@ -335,6 +366,8 @@ export class Main extends Scene {
 
     handleInteractedEvent(interact: InteractedWithGameModel) {
         // === Update the registry ===
+        const contextMap = getContextMap(this.registry);
+        contextMap[getCurrentDifficulty(this.registry)!] = interact.context;
         this.registry.set(CONTEXT_DATA, interact.context);
         this.registry.set(BALANCE_DATA, interact.new_balance);
         // === Emit events ===
@@ -400,21 +433,21 @@ export class Main extends Scene {
                         onComplete: () => {
                             // Instead of abruptly removing the knife, let it fall off-screen.
                             this.setStatus(PiggyState.GAME_ONGOING_IDLE);
-                            let startColor = Phaser.Display.Color.ValueToColor(0xffffff);
-                            let endColor = Phaser.Display.Color.ValueToColor(0x555555);
-                            let colorObj = { t: 0 };
+                            const startColor = Phaser.Display.Color.ValueToColor(0xffffff);
+                            const endColor = Phaser.Display.Color.ValueToColor(0x555555);
+                            const colorObj = { t: 0 };
                             this.tweens.add({
                                 targets: colorObj,
                                 t: 100,
                                 duration: 300,
                                 onUpdate: () => {
-                                    let interpolated = Phaser.Display.Color.Interpolate.ColorWithColor(
+                                    const interpolated = Phaser.Display.Color.Interpolate.ColorWithColor(
                                         startColor,
                                         endColor,
                                         100,
                                         colorObj.t
                                     );
-                                    let newTint = Phaser.Display.Color.GetColor(interpolated.r, interpolated.g, interpolated.b);
+                                    const newTint = Phaser.Display.Color.GetColor(interpolated.r, interpolated.g, interpolated.b);
                                     platform.setTint(newTint);
                                 },
                             });
@@ -469,7 +502,7 @@ export class Main extends Scene {
     handleError(errorMsg: string) {
         const parsed = parseError(errorMsg);
         const msg = getPiggyBankErrorMessage(parsed[0], parsed[1]);
-        this.dialog?.show("Error", msg, "Reload", () => this.reload);
+        this.dialog?.show("Error", msg, "Reload", () => this.reload());
     }
 
     reload() {
@@ -490,7 +523,7 @@ export class Main extends Scene {
         }
         else {
             balanceManagerDataPromise = mockFetchBalanceManager();
-            fetchContextPromise = mockFetchContext();
+            fetchContextPromise = mockFetchContext(getCurrentDifficulty(this.registry)!);
         }
 
         Promise.all([balanceManagerDataPromise, fetchContextPromise])
@@ -499,7 +532,7 @@ export class Main extends Scene {
                     this.registry.set(BALANCE_MANAGER_DATA, balanceManagerData);
                     this.registry.set(CONTEXT_DATA, context);
                     this.registry.set(BALANCE_DATA, BigInt(balanceManagerData.balance) ?? BigInt(0));
-                    
+
                     // Stop all animatinos
                     this.tweens.killAll();
 

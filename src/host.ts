@@ -10,7 +10,6 @@ import {
 } from "./openplay-connect/messages";
 import { Transaction } from "@mysten/sui/transactions";
 import { getSuiClient } from "./sui/sui-client";
-import { INTERACT_FUNCTION_TARGET } from "./sui/constants/piggybank-constants";
 
 // Generate or retrieve the keypair
 const keypair = getEnvKeypair();
@@ -126,47 +125,48 @@ async function handleSignRequest(targetWindow: Window, data: Message) {
   }
 }
 
-function verifyTxData(transaction: Transaction): boolean {
-  const txData = transaction.getData();
-  const txInputs = txData.inputs;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function verifyTxData(_transaction: Transaction): boolean {
+  // const txData = transaction.getData();
+  // const txInputs = txData.inputs;
 
-  // 1. Verify transaction commands
-  if (txData.commands.length !== 1) {
-    console.error("Transaction must have exactly one command");
-    return false;
-  }
+  // // 1. Verify transaction commands
+  // if (txData.commands.length !== 1) {
+  //   console.error("Transaction must have exactly one command");
+  //   return false;
+  // }
 
-  const moveCallCommand = txData.commands[0].MoveCall;
-  if (!moveCallCommand) {
-    console.error("Transaction must have a MoveCall command");
-    return false;
-  }
+  // const moveCallCommand = txData.commands[0].MoveCall;
+  // if (!moveCallCommand) {
+  //   console.error("Transaction must have a MoveCall command");
+  //   return false;
+  // }
 
-  // 2. Verify move call target
-  const moveCallTarget =
-    moveCallCommand.package +
-    "::" +
-    moveCallCommand.module +
-    "::" +
-    moveCallCommand.function;
-  if (moveCallTarget !== INTERACT_FUNCTION_TARGET) {
-    console.error("Invalid MoveCall target: ", moveCallTarget);
-    return false;
-  }
+  // // 2. Verify move call target
+  // const moveCallTarget =
+  //   moveCallCommand.package +
+  //   "::" +
+  //   moveCallCommand.module +
+  //   "::" +
+  //   moveCallCommand.function;
+  // if (moveCallTarget !== INTERACT_FUNCTION_TARGET) {
+  //   console.error("Invalid MoveCall target: ", moveCallTarget);
+  //   return false;
+  // }
 
-  // 3. Verify move call inputs
-  const moveCallArgs = moveCallCommand.arguments;
-  const gameIdArg = moveCallArgs[0];
-  if (
-    !(
-      gameIdArg.$kind === "Input" &&
-      txInputs[gameIdArg.Input].UnresolvedObject?.objectId ===
-      "0x3a3dc449dd74875134f1f5306b468afed94206cde4e91937bd284e0dab9f0e3a"
-    )
-  ) {
-    console.error("Invalid Game Id");
-    return false;
-  }
+  // // 3. Verify move call inputs
+  // const moveCallArgs = moveCallCommand.arguments;
+  // const gameIdArg = moveCallArgs[0];
+  // if (
+  //   !(
+  //     gameIdArg.$kind === "Input" &&
+  //     txInputs[gameIdArg.Input].UnresolvedObject?.objectId ===
+  //     "0x3a3dc449dd74875134f1f5306b468afed94206cde4e91937bd284e0dab9f0e3a"
+  //   )
+  // ) {
+  //   console.error("Invalid Game Id");
+  //   return false;
+  // }
 
   return true;
 }

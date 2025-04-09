@@ -1,4 +1,5 @@
-﻿import { MoveObject, Table, Uid, VecSet } from "./shared-models";
+﻿/* eslint-disable @typescript-eslint/no-empty-object-type */
+import { MoveObject, Table, Uid, VecSet } from "./shared-models";
 
 export const errorMessages: Record<string, Record<number, string>> = {
     context: {

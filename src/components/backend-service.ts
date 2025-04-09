@@ -1,7 +1,7 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { ADVANCE_ACTION, CASH_OUT_ACTION, INTERACT_EVENT_TYPE, INTERACT_FUNCTION_TARGET, START_GAME_ACTION } from "../sui/constants/piggybank-constants";
 
-import { signAndExecuteTransaction } from "../openplay-connect/functions";
+import { notifyBalanceUpdate, signAndExecuteTransaction } from "../openplay-connect/functions";
 import { InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import { BALANCE_DATA, CONTEXT_DATA, ERROR_EVENT, INTERACTED_EVENT, STAKE_DATA } from "../constants";
 import { OpenPlayGame } from "../game";
@@ -65,6 +65,7 @@ export default class BackendService implements IBackendService {
             if (interactEvent) {
                 const parsedEvent = parseInteractedWithGameModel(interactEvent.parsedJson) as InteractedWithGameModel;
                 this.scene.events.emit('interacted-event', parsedEvent);
+                notifyBalanceUpdate();
             }
             else {
                 this.scene.events.emit('error-event', 'No interact event found');
@@ -119,6 +120,7 @@ export default class BackendService implements IBackendService {
             if (interactEvent) {
                 const parsedEvent = parseInteractedWithGameModel(interactEvent.parsedJson) as InteractedWithGameModel;
                 this.scene.events.emit(INTERACTED_EVENT, parsedEvent);
+                notifyBalanceUpdate();
             }
             else {
                 this.scene.events.emit(ERROR_EVENT, 'No interact event found');
@@ -174,6 +176,7 @@ export default class BackendService implements IBackendService {
             if (interactEvent) {
                 const parsedEvent = parseInteractedWithGameModel(interactEvent.parsedJson) as InteractedWithGameModel;
                 this.scene.events.emit(INTERACTED_EVENT, parsedEvent);
+                notifyBalanceUpdate();
             }
         }
         catch (error) {

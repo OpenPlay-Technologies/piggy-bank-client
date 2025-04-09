@@ -25,6 +25,7 @@ export const INIT_DATA_READY_EVENT = 'init-data-ready-event';
 export const DIFFICULTY_CHANGED_EVENT = 'difficulty-changed-event';
 export const GAME_LOADED_EVENT = 'game-loaded-event';
 export const RELOAD_REQUESTED_EVENT = 'reload-requested-event';
+export const BALANCE_UPDATE_REQUESTED_EVENT = 'balance-update-requested-event';
 
 // === Data ===
 export const CONTEXT_DATA = 'context-data'; // Current working context

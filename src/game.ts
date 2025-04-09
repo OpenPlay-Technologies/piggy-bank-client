@@ -1,9 +1,9 @@
 import { Types } from "phaser";
-import { INIT_DATA_READY_EVENT } from "./constants";
+import { BALANCE_UPDATE_REQUESTED_EVENT, INIT_DATA_READY_EVENT } from "./constants";
 import { Boot } from "./scenes/boot-scene";
 import { Main } from "./scenes/main-scene";
 import { Preloader } from "./scenes/pre-loader-scene";
-import { INIT_REQUEST, INIT_RESPONSE, isMessage } from "./openplay-connect/messages";
+import { BALANCE_UPDATE_NOTIFICATION, INIT_REQUEST, INIT_RESPONSE, isMessage } from "./openplay-connect/messages";
 import { GameUIScene } from "./scenes/game-ui-scene";
 // import { ZoomTestScene } from "./scenes/zoom-test";
 
@@ -91,6 +91,11 @@ window.addEventListener('message', (event: MessageEvent) => {
                 };
                 window.parent.postMessage(responseData, '*');
                 return;
+            }
+            break;
+        case BALANCE_UPDATE_NOTIFICATION:
+            if (game) {
+                game.events.emit(BALANCE_UPDATE_REQUESTED_EVENT);
             }
             break;
         default:

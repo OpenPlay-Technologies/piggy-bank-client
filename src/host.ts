@@ -1,5 +1,6 @@
 import { getEnvKeypair } from "./utils/keypair";
 import {
+  BALANCE_UPDATE_NOTIFICATION,
   CLOSE_GAME_REQUEST,
   INIT_REQUEST,
   INIT_RESPONSE,
@@ -44,7 +45,10 @@ window.addEventListener("message", (event: MessageEvent) => {
       }
       break;
     case CLOSE_GAME_REQUEST:
-     window.alert("Close game request received");
+      window.alert("Close game request received");
+      break;
+    case BALANCE_UPDATE_NOTIFICATION:
+      // window.alert("Balance update notification received");
       break;
     default:
       // Unknown message type; no action.

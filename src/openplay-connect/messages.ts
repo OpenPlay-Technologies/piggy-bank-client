@@ -6,6 +6,7 @@ export const TX_SIGN_AND_EXECUTE_RESPONSE = "TX_SIGN_AND_EXECUTE_RESPONSE";
 export const INIT_REQUEST = "INIT_REQUEST";
 export const INIT_RESPONSE = "INIT_RESPONSE";
 export const CLOSE_GAME_REQUEST = "CLOSE_GAME_REQUEST";
+export const BALANCE_UPDATE_NOTIFICATION = "BALANCE_UPDATE_NOTIFICATION";
 
 export type Message =
     |
@@ -46,6 +47,10 @@ export type Message =
     |
     {
         type: typeof CLOSE_GAME_REQUEST;
+    }
+    |
+    {
+        type: typeof BALANCE_UPDATE_NOTIFICATION;
     };
 
 export function isMessage(value: Message) {
@@ -55,6 +60,7 @@ export function isMessage(value: Message) {
         value.type === TX_SIGN_AND_EXECUTE_RESPONSE ||
         value.type === INIT_REQUEST ||
         value.type === INIT_RESPONSE ||
-        value.type === CLOSE_GAME_REQUEST
+        value.type === CLOSE_GAME_REQUEST ||
+        value.type === BALANCE_UPDATE_NOTIFICATION
     );
 }

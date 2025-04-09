@@ -50,6 +50,14 @@ export function signAndExecuteTransaction(
     });
 }
 
+export function notifyBalanceUpdate() {
+    const message: Message = {
+        type: "BALANCE_UPDATE_NOTIFICATION",
+    };
+
+    window.parent.postMessage(message, '*');
+}
+
 
 export function requestCloseGame() {
     const message: Message = {

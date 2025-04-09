@@ -2,7 +2,7 @@
 import { Scene } from "phaser";
 import BackendService, { IBackendService } from "../components/backend-service";
 import { Dialog } from "../components/dialog";
-import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_MANAGER_DATA, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, DIFFICULTY_CHANGED_EVENT, DIFFICULTY_DATA, ERROR_EVENT, GAME_DATA, GAME_LOADED_EVENT, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, RELOAD_REQUESTED_EVENT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_DATA, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
+import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_MANAGER_DATA, BALANCE_UPDATE_REQUESTED_EVENT, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, DIFFICULTY_CHANGED_EVENT, DIFFICULTY_DATA, ERROR_EVENT, GAME_DATA, GAME_LOADED_EVENT, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, RELOAD_REQUESTED_EVENT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_DATA, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
 import { GAME_ONGOING_STATUS, GAME_FINISHED_STATUS, EMPTY_POSITION } from "../sui/constants/piggybank-constants";
 import { GameModel, InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import MockBackendService, { mockFetchBalanceManager, mockFetchContext } from "../components/mock-backend-service";
@@ -143,6 +143,7 @@ export class Main extends Scene {
         this.events.on(INTERACTED_EVENT, this.handleInteractedEvent, this);
         this.events.on(ERROR_EVENT, this.handleError, this);
         this.events.on(PLATFORM_CLICKED_EVENT, this.handlePlatformClicked, this);
+        this.game.events.on(BALANCE_UPDATE_REQUESTED_EVENT, this.reload, this);
         uiScene.events.on(START_GAME_REQUESTED_EVENT, this.handleStartGameRequested, this);
         uiScene.events.on(ADVANCE_REQUESTED_EVENT, this.handleAdvanceRequested, this);
         uiScene.events.on(CASH_OUT_REQUESTED_EVENT, this.handleCashOutRequested, this);
@@ -153,6 +154,7 @@ export class Main extends Scene {
         this.loadGame();
     }
 
+    
     private handleDifficultyChanged() {
         const difficulty: Difficulty = this.registry.get(DIFFICULTY_DATA);
         if (difficulty) {

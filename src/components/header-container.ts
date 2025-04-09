@@ -1,6 +1,6 @@
 // HeaderContainer.ts
 import { BALANCE_BAR_HEIGHT_PX, RELOAD_REQUESTED_EVENT } from "../constants";
-import { requestCloseGame } from "../openplay-connect/functions";
+import { requestCloseGame } from "../openplay-connect/game-functions";
 import { IconButton } from "./icon-button";
 
 export class HeaderContainer extends Phaser.GameObjects.Container {

@@ -1,7 +1,7 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { ADVANCE_ACTION, CASH_OUT_ACTION, INTERACT_EVENT_TYPE, INTERACT_FUNCTION_TARGET, START_GAME_ACTION } from "../sui/constants/piggybank-constants";
 
-import { notifyBalanceUpdate, signAndExecuteTransaction } from "../openplay-connect/functions";
+import { notifyBalanceUpdate, signAndExecuteTransaction } from "../openplay-connect/game-functions";
 import { InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import { BALANCE_DATA, CONTEXT_DATA, ERROR_EVENT, INTERACTED_EVENT, STAKE_DATA } from "../constants";
 import { OpenPlayGame } from "../game";

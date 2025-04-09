@@ -134,7 +134,7 @@ const setupFullscreenHighDPIScaling = (game: Phaser.Game): (() => void) => {
         const screenWidth: number = window.innerWidth;
         const screenHeight: number = window.innerHeight;
 
-        // Get current device pixel ratio!
+        // Get current device pixel ratio
         const dpr: number = window.devicePixelRatio || 1;
 
         const scaledWidth = Math.ceil(screenWidth * dpr);

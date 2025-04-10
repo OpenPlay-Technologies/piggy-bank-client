@@ -156,6 +156,15 @@ export default class ActionButton extends Phaser.GameObjects.Container {
         this.label.setText(newText);
     }
 
+    public setOnClick(callback: () => void): void {
+        this.removeAllListeners("pointerdown"); // Remove previous listeners
+        this.on("pointerdown", () => {
+            if (this._enabled) {
+                callback();
+            }
+        });
+    }
+
     /**
      * Resizes the button and updates the interactive hit area.
      * @param width - New width of the button.

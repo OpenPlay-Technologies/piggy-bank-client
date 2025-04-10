@@ -81,6 +81,11 @@ export class Preloader extends Scene {
 
         this.load.image('title', 'assets/ui/Title2.png');
 
+        this.load.image('error-title', 'assets/error/Title.png');
+        this.load.image('error-header', 'assets/error/Header.png');
+        this.load.image('error-popup', 'assets/error/Popup.png');
+        this.load.image('error-button', 'assets/error/Restart.png');
+
 
         // ---------------------------
         // Create animations

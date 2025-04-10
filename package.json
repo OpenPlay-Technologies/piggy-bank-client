@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --mode testnet",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint ./ --fix"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",

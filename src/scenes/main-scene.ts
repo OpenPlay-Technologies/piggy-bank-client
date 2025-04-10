@@ -2,7 +2,7 @@
 import { Scene } from "phaser";
 import BackendService, { IBackendService } from "../components/backend-service";
 import { Dialog } from "../components/dialog";
-import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_MANAGER_DATA, BALANCE_UPDATE_REQUESTED_EVENT, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, DIFFICULTY_CHANGED_EVENT, DIFFICULTY_DATA, ERROR_EVENT, GAME_DATA, GAME_LOADED_EVENT, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, RELOAD_REQUESTED_EVENT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_DATA, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
+import { ADVANCE_REQUESTED_EVENT, BALANCE_BAR_HEIGHT_PX, BALANCE_DATA, BALANCE_MANAGER_DATA, BALANCE_UPDATE_REQUESTED_EVENT, BALANCE_UPDATED_EVENT, CASH_OUT_REQUESTED_EVENT, COLUMN_WIDTH, CONTEXT_DATA, DESKTOP_UI_HEIGHT, DIFFICULTY_CHANGED_EVENT, DIFFICULTY_DATA, GAME_DATA, GAME_LOADED_EVENT, HEIGHT, INTERACTED_EVENT, MOBILE_UI_HEIGHT, PLATFORM_CLICKED_EVENT, PLATFORM_PASSED_TINT, RELOAD_REQUESTED_EVENT, STAKE_DATA, START_GAME_REQUESTED_EVENT, STATUS_DATA, STATUS_UPDATED_EVENT, WORLD_HEIGHT, Y_POS } from "../constants";
 import { GAME_ONGOING_STATUS, GAME_FINISHED_STATUS, EMPTY_POSITION } from "../sui/constants/piggybank-constants";
 import { GameModel, InteractedWithGameModel, PiggyBankContextModel } from "../sui/models/openplay-piggy-bank";
 import MockBackendService, { mockFetchBalanceManager, mockFetchContext } from "../components/mock-backend-service";
@@ -14,7 +14,6 @@ import { isPortrait } from "../utils/resize";
 import { fetchContext } from "../sui/queries/piggy-bank";
 import { OpenPlayGame } from "../game";
 import { fetchBalanceManager } from "../sui/queries/balance-manager";
-import { getPiggyBankErrorMessage, parseError } from "../utils/error-messages";
 import { resetCamera, setupCamera } from "./main-helpers/camera-helper";
 import { getContextForDifficulty, getContextMap, getCurrentDifficulty, getGameDataForDifficulty } from "../utils/registry";
 
@@ -130,10 +129,6 @@ export class Main extends Scene {
         // === Pig character ===
         setupPiggy(this);
 
-        // === Error Dialog ===
-        // Create the dialog component centered on the screen
-        this.dialog = new Dialog(this, this.cameras.main.centerX, this.cameras.main.centerY, 400, 300);
-
         // === Camera ===
         // Follow pig with the camera
         setupCamera(this);
@@ -141,7 +136,6 @@ export class Main extends Scene {
         // === Event Listeners ===
         const uiScene = this.scene.get('GameUIScene');
         this.events.on(INTERACTED_EVENT, this.handleInteractedEvent, this);
-        this.events.on(ERROR_EVENT, this.handleError, this);
         this.events.on(PLATFORM_CLICKED_EVENT, this.handlePlatformClicked, this);
         this.game.events.on(BALANCE_UPDATE_REQUESTED_EVENT, this.reload, this);
         uiScene.events.on(START_GAME_REQUESTED_EVENT, this.handleStartGameRequested, this);
@@ -320,7 +314,11 @@ export class Main extends Scene {
     loadGame() {
         let status = PiggyState.NO_GAME_IDLE;
         this.currentSpot = EMPTY_POSITION;
-        this.dialog?.hide();
+        // this.dialog?.hide();
+
+        this.dialog?.show("Loading", "Loading the game...", "Cancel", () => {
+            this.dialog?.hide();
+        });
 
         const contextData: PiggyBankContextModel | undefined = this.registry.get(CONTEXT_DATA);
         if (contextData && contextData.status === GAME_ONGOING_STATUS) {
@@ -499,12 +497,6 @@ export class Main extends Scene {
             this.handleCashOutRequested();
         }
 
-    }
-
-    handleError(errorMsg: string) {
-        const parsed = parseError(errorMsg);
-        const msg = getPiggyBankErrorMessage(parsed[0], parsed[1]);
-        this.dialog?.show("Error", msg, "Reload", () => this.reload());
     }
 
     reload() {

@@ -1,9 +1,16 @@
+import { Dialog } from "../components/dialog";
 import { GameUIContainer } from "../components/game-ui-container";
 import { HeaderContainer } from "../components/header-container";
+import { ERROR_EVENT, RELOAD_REQUESTED_EVENT } from "../constants";
+import { parseError, getPiggyBankErrorMessage } from "../utils/error-messages";
+import { isPortrait } from "../utils/resize";
 
 export class GameUIScene extends Phaser.Scene {
     private gameUIContainer!: GameUIContainer;
     headerContainer: HeaderContainer | undefined;
+    dialog: Dialog | undefined;
+    centerX: number = 0;
+    centerY: number = 0;
 
     constructor() {
         super({ key: "GameUIScene" });
@@ -18,9 +25,33 @@ export class GameUIScene extends Phaser.Scene {
             this.cameras.main.width / (2 * zoomLEvel),
             this.cameras.main.height / (2 * zoomLEvel)
         );
+
+        const width = this.scale.width / window.devicePixelRatio;
+        const height = this.scale.height / window.devicePixelRatio;
+
+        this.centerX = width / 2;
+        this.centerY = height / 2;
+
+        console.log("dialog width", this.scale.width / window.devicePixelRatio * 0.8);
+
+        let dialogWidth = 0
+        let dialogHeight = 0;
+
+        if (isPortrait(width, height)) {
+            dialogWidth = 300;
+            dialogHeight = 400;
+        }
+        else {
+            dialogWidth = 600;
+            dialogHeight = 400;
+        }
+
+        console.log("dialog dimensions", dialogWidth, dialogHeight);
+
+        this.dialog?.setPosition(this.centerX, this.centerY);
+        this.dialog?.resize(dialogWidth, dialogHeight);
     }
     create(): void {
-        this.resizeCamera();
 
         this.scale.on('resize', this.resizeCamera, this);
 
@@ -28,13 +59,30 @@ export class GameUIScene extends Phaser.Scene {
         this.gameUIContainer = new GameUIContainer(this, 0, 0);
         this.add.existing(this.gameUIContainer);
 
-        // 1. Scene upscalen zodat de devicePixelRatio geen verschil meer maakt
-        // 2. De knoppen en text een vaste grootte geven in pixels: door de scale gaat het ook op gsm er goed uit zien
-        // 3. Afhankelijk van de beschikbare hoogte en breedte (Gedeeld door de devicePixelRatio) de witruimtes aanpassen
-
 
         this.headerContainer = new HeaderContainer(this, 0, 0);
         this.add.existing(this.headerContainer);
         // this.balanceBarContainer.setScale(window.devicePixelRatio);
+
+        // === Error Dialog ===
+        // Create the dialog component centered on the screen
+        this.dialog = new Dialog(this, 0, 0);
+        this.add.existing(this.dialog);
+
+        this.resizeCamera();
+
+        // Listen to events
+        const gameScene = this.scene.get("Main");
+        gameScene.events.on(ERROR_EVENT, this.handleError, this);
+
+    }
+
+    handleError(errorMsg: string) {
+        const parsed = parseError(errorMsg);
+        const msg = getPiggyBankErrorMessage(parsed[0], parsed[1]);
+        this.dialog?.show("Error", msg, "Reload", () => {
+            this.events.emit(RELOAD_REQUESTED_EVENT);
+            this.dialog?.hide();
+        });
     }
 }

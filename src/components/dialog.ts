@@ -155,8 +155,7 @@ export class Dialog extends Phaser.GameObjects.Container {
 		// Reposition the content text to always start just below the header.
 		const contentStartY = this.headerImage.y + (headerHeight / 2) + this.margin;
 		// Set origin so the text begins at the top (and is horizontally centered)
-		this.contentText.setOrigin(0.5, 0);
-		this.contentText.setPosition(0, contentStartY);
+		this.contentText.setOrigin(0.5, 0.5);
 		// Update word wrap width if needed
 		this.contentText.setWordWrapWidth(this.wordWrap);
 
@@ -164,6 +163,9 @@ export class Dialog extends Phaser.GameObjects.Container {
 		const contentEndY = this.actionButton.y - (this.actionButton.displayHeight / 2) - this.margin*2;
 		const allowedHeight = contentEndY - contentStartY;
 		const allowedWidth = this.wordWrap;
+
+		const centerY = contentStartY + (allowedHeight / 2);
+		this.contentText.setPosition(0, centerY);
 
 		// Convert the local mask rectangle to world coordinates.
 		// The container's position in the scene is (this.x, this.y).

@@ -16,7 +16,7 @@ interface BetDifficultyConfig {
 export default class StakeSelector extends Phaser.GameObjects.Container {
     // State variables
     private stakeIndex: number = 0;
-    private allowdStakes: number[] = [1e7, 2e7, 3e7, 5e7, 10e7, 1e9];
+    private allowdStakes: number[] = [1e7, 5e7, 10e7, 20e7, 50e7, 1e9];
 
     // Configuration and state
     private mainColor: number;
